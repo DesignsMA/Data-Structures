@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <conio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -68,7 +67,8 @@ int PilaVacia()
 void CargarExpresion(char *expresion)
 {
     printf("Ingrese la Expresion:");
-    gets(expresion);
+    //leer cadena con un limite de sizeof(expresion) en el stream stdin
+    fgets(expresion, sizeof(expresion), stdin);
 }
 
 int verificar(char *expresion)
@@ -135,6 +135,6 @@ int main()
         printf("no esta balanceada");
     }
     liberar();
-    getch();
+    getchar();
     return 0;
 }
