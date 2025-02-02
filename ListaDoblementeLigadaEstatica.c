@@ -30,11 +30,12 @@ void insertaInicio(int valor) {
     }
 
     int nuevo = libre;       // Toma el índice del nodo libre
-    libre = lista[libre].sig; // Actualiza el índice libre al siguiente
+    libre = lista[nuevo].sig; // Actualiza el índice libre al siguiente
 
     // Asigna el valor al nuevo nodo y lo enlaza al inicio de la lista
     lista[nuevo].dato = valor;
     lista[nuevo].sig = cabeza;
+    lista[nuevo].ant = -1; // no hay nada antes
 
     // El nuevo nodo será la nueva cabeza de la lista
     cabeza = nuevo;
@@ -51,7 +52,8 @@ void insertaMedio(int valor, int pos) {
     if (pos < 0) {
         printf("Error: La posición no es válida.\n");
         return;
-    }
+    } else if (pos == 0) insertaInicio(valor); 
+    
 
     // Tomar un nodo libre
     int nuevo = libre;       // Toma el índice del nodo libre
@@ -63,6 +65,7 @@ void insertaMedio(int valor, int pos) {
     // Insertar el nuevo nodo en la posición `pos`
     lista[nuevo].sig = lista[pos].sig;
     lista[pos].sig = nuevo;
+    lista[nuevo].ant = pos; //apuntar al anterior
 }
 
 // Función para insertar un nodo al final
@@ -82,13 +85,15 @@ void insertaFinal(int valor) {
     if (cabeza == -1) {
         // Si la lista está vacía, el nuevo nodo será la cabeza
         cabeza = nuevo;
-    } else {
+    } else 
+    {
         // Recorrer la lista para encontrar el último nodo
         int actual = cabeza;
         while (lista[actual].sig != -1) {
             actual = lista[actual].sig;
         }
         lista[actual].sig = nuevo; // Enlaza el nuevo nodo al final
+        lista[nuevo].ant = actual; //  Vincular anterior
     }
 }
 
