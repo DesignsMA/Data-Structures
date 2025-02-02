@@ -119,8 +119,10 @@ int borrarFinal() {
     }
 
     // Eliminar el último nodo
+    lista[lista[actual].sig].ant = -1; // Desvincular
     int datoEliminado = lista[lista[actual].sig].dato; // Dato del último nodo
     lista[actual].sig = -1; // Actualiza el penúltimo nodo para que sea el último
+    libre = lista[actual].sig;
     return datoEliminado;
 }
 
@@ -160,33 +162,22 @@ void borraMedio(int pos) {
     if (pos < 0 || pos > MAX - 1) {
         printf("Error: La posición no es válida.\n");
         return;
-    }
+    } else if (pos == cabeza) borraInicio();
 
-    int anterior = cabeza;
     int actual = cabeza;
 
     // Recorrer la lista hasta encontrar el nodo en la posición `pos`
-    while (actual != pos) {
-        anterior = actual;
+    while (lista[actual].sig != pos) {
         actual = lista[actual].sig;
     }
-
-    // Caso especial: borrar el primer nodo
-    if (pos == cabeza) {
-        borraInicio();
-        return;
-    }
-
     // Caso especial: borrar el último nodo
-    if (lista[actual].sig == -1) {
-        borrarFinal();
-        return;
-    }
+    if (lista[actual].sig == -1) borrarFinal();
 
     // Eliminar el nodo en la posición `pos`
-    lista[anterior].sig = lista[actual].sig;
-    lista[actual].sig = libre; // Libera el nodo eliminado
-    libre = actual;
+    libre = pos;
+    lista[actual].sig = lista[pos].sig; // apunta al siguiente elemento saltando pos
+    lista[pos].ant = -1; // Libera el nodo eliminado
+    
 }
 
 // Función para imprimir la lista
@@ -195,6 +186,19 @@ void imprimirLista() {
     while (actual != -1) {
         printf("%d -> ", lista[actual].dato);
         actual = lista[actual].sig;
+    }
+    printf("NULL\n");
+}
+
+void imprimirListaRev() {
+    int actual = cabeza;
+    while (lista[actual].sig != -1) {
+        actual = lista[actual].sig;
+    }
+
+    while (actual != -1) {
+        printf("%d -> ", lista[actual].dato);
+        actual = lista[actual].ant;
     }
     printf("NULL\n");
 }
@@ -263,6 +267,8 @@ inicializarLista(); // Inicializa la lista estática
     borraMedio(buscarElemento(81));
     printf("Lista después de borrar en medio: ");
     imprimirLista();
+
+    imprimirListaRev();
 
     return 0;
 }
