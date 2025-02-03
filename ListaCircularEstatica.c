@@ -30,14 +30,28 @@ void insertaInicio(int valor) {
     int nuevo = libre;       // Toma el índice del nodo libre
     libre = lista[libre].sig; // Actualiza el índice libre al siguiente
 
-    // Asigna el valor al nuevo nodo y lo enlaza al inicio de la lista
+    // Asigna el valor al nuevo nodo
     lista[nuevo].dato = valor;
-    lista[nuevo].sig = cabeza;
 
-    // El nuevo nodo será la nueva cabeza de la lista
-    cabeza = nuevo;
+    if (cabeza == -1) {
+        // Si la lista está vacía, el nuevo nodo será la cabeza y apunta a sí mismo
+        cabeza = nuevo;
+        lista[nuevo].sig = nuevo;
+    } else {
+        // Enlaza el nuevo nodo al inicio
+        lista[nuevo].sig = cabeza;
+
+        // Actualiza el último nodo para que apunte al nuevo nodo
+        int actual = cabeza;
+        while (lista[actual].sig != cabeza) {
+            actual = lista[actual].sig;
+        }
+        lista[actual].sig = nuevo;
+
+        // Actualiza la cabeza
+        cabeza = nuevo;
+    }
 }
-
 // Función para insertar un nodo en una posición específica
 void insertaMedio(int valor, int pos) {
     if (libre == -1) {
@@ -46,19 +60,19 @@ void insertaMedio(int valor, int pos) {
     }
 
     // Verificar si la posición es válida
-    if (pos < 0) {
+    if (pos < 0 || pos >= MAX) {
         printf("Error: La posición no es válida.\n");
         return;
     }
 
     // Tomar un nodo libre
-    int nuevo = libre;       // Toma el índice del nodo libre
-    libre = lista[libre].sig; // Actualiza el índice libre al siguiente
+    int nuevo = libre;
+    libre = lista[libre].sig;
 
     // Asignar el valor al nuevo nodo
     lista[nuevo].dato = valor;
 
-    // Insertar el nuevo nodo en la posición `pos`
+    // Insertar el nuevo nodo después del nodo en la posición `pos`
     lista[nuevo].sig = lista[pos].sig;
     lista[pos].sig = nuevo;
 }
@@ -75,15 +89,16 @@ void insertaFinal(int valor) {
 
     // Asignar el valor al nuevo nodo
     lista[nuevo].dato = valor;
-    lista[nuevo].sig = -1; // Este nodo será el último
+    lista[nuevo].sig = cabeza; // Este nodo será el último, regresa al principio
 
     if (cabeza == -1) {
         // Si la lista está vacía, el nuevo nodo será la cabeza
         cabeza = nuevo;
+        lista[nuevo].sig = nuevo; //apunta a si mismo
     } else {
         // Recorrer la lista para encontrar el último nodo
         int actual = cabeza;
-        while (lista[actual].sig != -1) {
+        while (lista[actual].sig != cabeza) {
             actual = lista[actual].sig;
         }
         lista[actual].sig = nuevo; // Enlaza el nuevo nodo al final
@@ -98,34 +113,45 @@ int borrarFinal() {
     }
 
     int actual = cabeza;
+    int anterior = -1;
 
-    // Si solo hay un nodo
-    if (lista[actual].sig == -1) {
-        int datoEliminado = lista[actual].dato;
-        cabeza = -1; // La lista queda vacía
-        return datoEliminado;
-    }
-
-    // Recorrer hasta el penúltimo nodo
-    while (lista[lista[actual].sig].sig != -1) {
+    // Recorrer hasta el último nodo
+    while (lista[actual].sig != cabeza) {
+        anterior = actual;
         actual = lista[actual].sig;
     }
 
-    // Eliminar el último nodo
-    int datoEliminado = lista[lista[actual].sig].dato; // Dato del último nodo
-    lista[actual].sig = -1; // Actualiza el penúltimo nodo para que sea el último
+    int datoEliminado = lista[actual].dato;
+
+    if (anterior == -1) {
+        // Si solo hay un nodo
+        cabeza = -1;
+    } else {
+        // Eliminar el último nodo
+        lista[anterior].sig = cabeza;
+    }
+
+    // Liberar el nodo eliminado
+    lista[actual].sig = libre;
+    libre = actual;
+
     return datoEliminado;
 }
 
 // Función para buscar un elemento en la lista
 int buscarElemento(int valorBuscado) {
+    if (cabeza == -1) {
+        return -1; // Lista vacía
+    }
+
     int actual = cabeza;
-    while (actual != -1) {
+    do {
         if (lista[actual].dato == valorBuscado) {
             return actual; // Retorna el índice del nodo encontrado
         }
         actual = lista[actual].sig;
-    }
+    } while (actual != cabeza);
+
     return -1; // Retorna -1 si no encuentra el valor
 }
 
@@ -137,8 +163,22 @@ void borraInicio() {
     }
 
     int nodoEliminado = cabeza;
-    cabeza = lista[cabeza].sig; // Actualiza la cabeza al siguiente nodo
-    lista[nodoEliminado].sig = libre; // Libera el nodo eliminado
+
+    if (lista[cabeza].sig == cabeza) {
+        // Si solo hay un nodo
+        cabeza = -1;
+    } else {
+        // Actualizar la cabeza y el último nodo
+        int actual = cabeza;
+        while (lista[actual].sig != cabeza) {
+            actual = lista[actual].sig;
+        }
+        cabeza = lista[cabeza].sig;
+        lista[actual].sig = cabeza;
+    }
+
+    // Liberar el nodo eliminado
+    lista[nodoEliminado].sig = libre;
     libre = nodoEliminado;
 }
 
@@ -150,18 +190,9 @@ void borraMedio(int pos) {
     }
 
     // Verificar si la posición es válida
-    if (pos < 0 || pos > MAX - 1) {
+    if (pos < 0 || pos >= MAX) {
         printf("Error: La posición no es válida.\n");
         return;
-    }
-
-    int anterior = cabeza;
-    int actual = cabeza;
-
-    // Recorrer la lista hasta encontrar el nodo en la posición `pos`
-    while (actual != pos) {
-        anterior = actual;
-        actual = lista[actual].sig;
     }
 
     // Caso especial: borrar el primer nodo
@@ -170,26 +201,38 @@ void borraMedio(int pos) {
         return;
     }
 
-    // Caso especial: borrar el último nodo
-    if (lista[actual].sig == -1) {
-        borrarFinal();
-        return;
+    // Buscar el nodo anterior al que se va a eliminar
+    int anterior = cabeza;
+    while (lista[anterior].sig != pos) {
+        anterior = lista[anterior].sig;
+        if (anterior == cabeza) {
+            printf("Error: La posición no existe en la lista.\n");
+            return;
+        }
     }
 
     // Eliminar el nodo en la posición `pos`
-    lista[anterior].sig = lista[actual].sig;
-    lista[actual].sig = libre; // Libera el nodo eliminado
-    libre = actual;
+    int nodoEliminado = lista[anterior].sig;
+    lista[anterior].sig = lista[nodoEliminado].sig;
+
+    // Liberar el nodo eliminado
+    lista[nodoEliminado].sig = libre;
+    libre = nodoEliminado;
 }
 
 // Función para imprimir la lista
 void imprimirLista() {
+    if (cabeza == -1) {
+        printf("Lista vacía.\n");
+        return;
+    }
+
     int actual = cabeza;
-    while (actual != -1) {
+    do {
         printf("%d -> ", lista[actual].dato);
         actual = lista[actual].sig;
-    }
-    printf("NULL\n");
+    } while (actual != cabeza);
+    printf("\n");
 }
 
 // Función principal
