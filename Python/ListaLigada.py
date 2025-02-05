@@ -9,15 +9,23 @@ class Lista:
 
     def insertEnd(self, data):
         """Inserta un nodo al final de la lista."""
-        nuevo = Nodo(data)
+        new = Nodo(data)
 
         if self.root is None:
-            self.root = nuevo  # Si la lista está vacía, el nuevo nodo es la raíz
+            self.root = new  # Si la lista está vacía, el new nodo es la raíz
         else:
             aux = self.root
             while aux.sig is not None:  # Recorrer hasta el final
                 aux = aux.sig
-            aux.sig = nuevo  # Insertar al final
+            aux.sig = new  # Insertar al final
+    
+    def insertStart(self, data):
+        """Inserta un nodo al inicio de la lista."""
+        new = Nodo(data)
+        aux = self.root
+        new.sig = aux # apunta a la  raiz
+        self.root = new # ahora es la nueva raiz
+
 
     def print(self):
         """Imprime la lista completa."""
@@ -29,7 +37,9 @@ class Lista:
         
 
 list = Lista()
+list.insertStart(0)
 list.insertEnd(-1)
 list.insertEnd([-2,4,5]) #en python, una lista puede apuntar a diferentes tipos de objetos u datos
 list.insertEnd(Lista())
+list.insertStart("lista")
 list.print()
