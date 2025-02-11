@@ -93,6 +93,7 @@ class ListaDoble:
 # Interacción con el usuario
 lista = ListaDoble()
 while True:
+    lista.print()
     print("\n1. Insertar al inicio\n2. Insertar al final\n3. Insertar entre elementos\n4. Eliminar\n5. Buscar\n6. Mostrar lista\n7. Salir")
     opcion = input("Elige una opción: ")
     
