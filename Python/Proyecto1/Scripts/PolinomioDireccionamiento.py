@@ -38,7 +38,6 @@ def polinomio_direccionamiento(dim, pos, sizes, bytes):
         dir += r * (pos[n] -1)  # pos[n] ya está en base 0
     return dir * bytes  # Multiplica por el tamaño del tipo de dato
 
-
 def main():
     """
     Función principal del programa.
@@ -98,7 +97,3 @@ def main():
     print("\nEl elemento en posicion: ", end="")
     print_matrix(dim, pos)  # Se imprimen las posiciones
     print(f"\nTiene una direccion de memoria aproximada de: DirE + {polinomio_direccionamiento(dim, pos, sizes, bytes)}")  # Se imprime la direccion de memoria
-
-
-if __name__ == "__main__":
-    main()
