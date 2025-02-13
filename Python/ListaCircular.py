@@ -131,35 +131,36 @@ class ListaCircular:
         print(self.current.data)
         self.current = self.current.sig
 
-# Interacción con el usuario
-lista = ListaCircular()
-while True:
-    lista.print()
-    print("\n1. Insertar al inicio\n2. Insertar al final\n3. Insertar en posición\n4. Eliminar al inicio\n5. Eliminar al final\n6. Eliminar en posición\n7. Mostrar lista completa\n8. Mostrar un nodo\n9. Salir")
-    opcion = input("Elige una opción: ")
-    
-    if opcion == "1":
-        valor = input("Ingresa el valor a insertar al inicio: ")
-        lista.insertStart(valor)
-    elif opcion == "2":
-        valor = input("Ingresa el valor a insertar al final: ")
-        lista.insertEnd(valor)
-    elif opcion == "3":
-        valor = input("Ingresa el valor a insertar: ")
-        posicion = int(input("Ingresa la posición: "))
-        lista.insertBetween(valor, posicion)
-    elif opcion == "4":
-        lista.deleteStart()
-    elif opcion == "5":
-        lista.deleteEnd()
-    elif opcion == "6":
-        posicion = int(input("Ingresa la posición a eliminar: "))
-        lista.deleteBetween(posicion)
-    elif opcion == "7":
+def interact():
+    # Interacción con el usuario
+    lista = ListaCircular()
+    while True:
         lista.print()
-    elif opcion == "8":
-        lista.printOne()
-    elif opcion == "9":
-        break
-    else:
-        print("Opción inválida, intenta de nuevo.")
+        print("\n1. Insertar al inicio\n2. Insertar al final\n3. Insertar en posición\n4. Eliminar al inicio\n5. Eliminar al final\n6. Eliminar en posición\n7. Mostrar lista completa\n8. Mostrar un nodo\n9. Salir")
+        opcion = input("Elige una opción: ")
+        
+        if opcion == "1":
+            valor = input("Ingresa el valor a insertar al inicio: ")
+            lista.insertStart(valor)
+        elif opcion == "2":
+            valor = input("Ingresa el valor a insertar al final: ")
+            lista.insertEnd(valor)
+        elif opcion == "3":
+            valor = input("Ingresa el valor a insertar: ")
+            posicion = int(input("Ingresa la posición: "))
+            lista.insertBetween(valor, posicion)
+        elif opcion == "4":
+            lista.deleteStart()
+        elif opcion == "5":
+            lista.deleteEnd()
+        elif opcion == "6":
+            posicion = int(input("Ingresa la posición a eliminar: "))
+            lista.deleteBetween(posicion)
+        elif opcion == "7":
+            lista.print()
+        elif opcion == "8":
+            lista.printOne()
+        elif opcion == "9":
+            break
+        else:
+            print("Opción inválida, intenta de nuevo.")

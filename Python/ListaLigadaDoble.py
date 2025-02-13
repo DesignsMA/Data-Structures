@@ -90,32 +90,33 @@ class ListaDoble:
             current = current.sig
         print("None")
 
-# Interacción con el usuario
-lista = ListaDoble()
-while True:
-    lista.print()
-    print("\n1. Insertar al inicio\n2. Insertar al final\n3. Insertar entre elementos\n4. Eliminar\n5. Buscar\n6. Mostrar lista\n7. Salir")
-    opcion = input("Elige una opción: ")
-    
-    if opcion == "1":
-        valor = input("Ingresa el valor a insertar al inicio: ")
-        lista.insertStart(valor)
-    elif opcion == "2":
-        valor = input("Ingresa el valor a insertar al final: ")
-        lista.insertEnd(valor)
-    elif opcion == "3":
-        prev_valor = input("Ingresa el valor del nodo previo: ")
-        valor = input("Ingresa el valor a insertar: ")
-        lista.insertBetween(prev_valor, valor)
-    elif opcion == "4":
-        valor = input("Ingresa el valor a eliminar | escribe inicio o final para borrar en esa posicion: ")
-        lista.remove(valor)
-    elif opcion == "5":
-        valor = input("Ingresa el valor a buscar: ")
-        print("Encontrado" if lista.exists(valor) else "No encontrado")
-    elif opcion == "6":
+def interact():
+    # Interacción con el usuario
+    lista = ListaDoble()
+    while True:
         lista.print()
-    elif opcion == "7":
-        break
-    else:
-        print("Opción inválida, intenta de nuevo.")
+        print("\n1. Insertar al inicio\n2. Insertar al final\n3. Insertar entre elementos\n4. Eliminar\n5. Buscar\n6. Mostrar lista\n7. Salir")
+        opcion = input("Elige una opción: ")
+
+        if opcion == "1":
+            valor = input("Ingresa el valor a insertar al inicio: ")
+            lista.insertStart(valor)
+        elif opcion == "2":
+            valor = input("Ingresa el valor a insertar al final: ")
+            lista.insertEnd(valor)
+        elif opcion == "3":
+            prev_valor = input("Ingresa el valor del nodo previo: ")
+            valor = input("Ingresa el valor a insertar: ")
+            lista.insertBetween(prev_valor, valor)
+        elif opcion == "4":
+            valor = input("Ingresa el valor a eliminar | escribe inicio o final para borrar en esa posicion: ")
+            lista.remove(valor)
+        elif opcion == "5":
+            valor = input("Ingresa el valor a buscar: ")
+            print("Encontrado" if lista.exists(valor) else "No encontrado")
+        elif opcion == "6":
+            lista.print()
+        elif opcion == "7":
+            break
+        else:
+            print("Opción inválida, intenta de nuevo.")
