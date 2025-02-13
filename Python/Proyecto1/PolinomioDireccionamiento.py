@@ -35,7 +35,7 @@ def polinomio_direccionamiento(dim, pos, sizes, bytes):
             r *= sizes[i]
 
         # Suma al resultado: r1 * r2 * ... * rn-1 * (kn - infn)
-        dir += r * pos[n]  # pos[n] ya está en base 0
+        dir += r * (pos[n] -1)  # pos[n] ya está en base 0
     return dir * bytes  # Multiplica por el tamaño del tipo de dato
 
 
@@ -87,7 +87,7 @@ def main():
             try:
                 print_matrix(i, pos)
                 pos[i] = int(input(f"[x]\nIntroduzca la posicion {i+1}: "))
-                if pos[i] < 0 or pos[i] >= sizes[i]:
+                if pos[i] < 0 or pos[i] > sizes[i]:
                     print("\nLa posicion no puede ser negativa o mayor al rango de su dimension\n")
                 else:
                     break
