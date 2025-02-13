@@ -19,8 +19,8 @@ def polinomio_direccionamiento(dim, pos, sizes, bytes):
 
     Args:
         dim (int): Número de dimensiones de la matriz.
-        pos (list): Lista de posiciones en cada dimensión.
-        sizes (list): Lista de tamaños de cada dimensión.
+        pos (list): Lista de posiciones en cada dimensión | empezando desde 1.
+        sizes (list): Lista de tamaños de cada dimensión | empezando desde 1.
         bytes (int): Número de bytes del tipo de dato.
 
     Returns:
