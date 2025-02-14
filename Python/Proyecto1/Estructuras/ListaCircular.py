@@ -1,4 +1,8 @@
-from ..Clases.Nodo import *
+class Nodo:
+    def __init__(self, data):
+        self.data = data  # Dato del nodo
+        self.sig = None   # Referencia al siguiente nodo
+        
 class ListaCircular:
     def __init__(self):
         self.root = None  # La lista empieza vacía

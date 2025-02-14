@@ -51,6 +51,7 @@ class Recurso:
         """
         if cantidad_usada > self.cantidad:
             raise ValueError(f"No hay suficientes recursos. Disponibles: {self.cantidad}")
+        
         self.cantidad -= cantidad_usada
         self.usados += 1 # solo si se usa
 

@@ -1,5 +1,5 @@
 # Importando clases
-from Nodo import Nodo
-from NodoDoble import NodoDoble
-from Persona import Persona
-from Recurso import Recurso
+from .persona import Persona
+from .recurso import Recurso
+from .asignacion import Asignacion
+from .CasoLegal import ProcesoLegal

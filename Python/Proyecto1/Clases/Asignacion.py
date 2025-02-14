@@ -1,4 +1,4 @@
-from Persona import Persona
+from .persona import Persona
 
 class Asignacion:
     """Representa la asignación de un recurso a un beneficiario.
