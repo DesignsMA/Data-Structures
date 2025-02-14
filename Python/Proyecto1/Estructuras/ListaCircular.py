@@ -117,6 +117,26 @@ class ListaCircular:
                 break
         print("(circular)")
     
+    def get_element_at(self, n):
+        """
+        Retorna el elemento en la posición n (empezando desde 0).
+        Si la posición no existe, retorna None.
+        """
+        if self.root is None:
+            print("Lista vacía.")
+            return None
+
+        aux = self.root
+        pos = 0
+        while aux is not None:
+            if pos == n:  # Si se encuentra la posición
+                return aux.data
+            aux = aux.sig  # Avanzar al siguiente nodo
+            pos += 1
+
+        print(f"La posición {n} no existe en la lista.")
+        return None
+    
     def printOne(self):
         """Imprime un nodo por vez, recorriendo en cada llamada."""
         if self.root is None:
