@@ -1,9 +1,9 @@
 class Pila():
     
     def _init_(self,size):
-        self.lista=[]
-        self.tope=0
-        self.size=size
+        self.lista = []
+        self.tope = 0
+        self.size =size
         
     def empty(self):
         if self.tope==0:
@@ -38,7 +38,7 @@ class Pila():
     def Size(self):
         return self.tope
     
-    def top(self):
+    def _top(self):
        if self.empty():
         print("no hay elementos, esta vacía")
        else:
