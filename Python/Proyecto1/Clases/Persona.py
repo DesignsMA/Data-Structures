@@ -5,7 +5,7 @@ import string
 prioridades = {0: "Regular", 1: "Urgente"}
 
 class Persona:
-    def __init__(self, nombre: str, nacionalidad: str, motivo: str, prioridad: int = 0):
+    def __init__(self, nombre: str, nacionalidad: str, motivo: str, prioridad: int):
         """
         Representación de una persona.
 
@@ -22,7 +22,7 @@ class Persona:
         self.nombre = string.capwords(nombre)  # Formatear el nombre (cada palabra en mayúscula)
         self.nacionalidad = nacionalidad.capitalize()  # Formatear la nacionalidad
         self.motivo = motivo.capitalize()  # Formatear el motivo
-        if prioridad not in prioridades:
+        if prioridad not in [0,1]:
             raise ValueError(f"Prioridad no válida. Opciones: {list(prioridades.keys())}")
         self.prioridad = prioridades[prioridad]  # Asignar la prioridad
 

@@ -41,19 +41,24 @@ class GestionAyuda():
         motivo=input("ingrese el motivo de la repatriación: ")
         nacionalidad=input("ingrese la nacionalidad: ")
         prioridad =  int( input("Ingrese la urgencia:\nRegular 0 | Urgente 1: ") )
+        persona = None
+        print(prioridad)
         
         try:
             persona = Persona(nombre, nacionalidad, motivo, prioridad)
-        except ValueError:
-            print("La prioridad no es valida.")
+        except ValueError as e:
+            print(e)
             return False
         
         # Solo ejecuta si no hay error
-        if persona.prioridad == 0: # caso regular se manda a cola
+        if prioridad == 0: # caso regular se manda a cola
             self.registros.encolar(persona)
-        elif persona.prioridad == 1: # caso urgente
+            print(self.registros)
+        elif prioridad == 1: # caso urgente
             self.urgentes.push(persona)
+            self.urgentes.show()
 
+    
         # Administrador añade recursos a las variables de instancia
     def gestionarRecursos(self):        
         print("0 - Alimentos | 1 - Refugios | 2 - Asesoría Legal")
@@ -77,13 +82,18 @@ class GestionAyuda():
             print("Ese tipo no es valido.")
     
     def atender(self):
-        if not self.urgentes.empty(): # si hay personas urgentes
-            persona = self.urgentes.pop() #remueve y retorna
-        else:
-            persona = self.registros.desencolar() #remueve y retorna
+        persona = Persona
+        try:
+            if self.urgentes.empty() == False: # si hay personas urgentes
+                persona = self.urgentes.pop() #remueve y retorna
+            else:
+                persona = self.registros.desencolar() #remueve y retorna
+        except IndexError as e:
+            print(e)
         
+        print(persona.datosBasicos())
         x = int( input("¿Que atención necesita?\n\
-                    0 - Alimentos | 1 - Refugios | 2 - Asesoría Legal") )
+        0 - Alimentos | 1 - Refugios | 2 - Asesoría Legal") )
         
         if x in  [0,1,2]:
             res = self.recursos.get_element_at( x )
@@ -93,7 +103,7 @@ class GestionAyuda():
             except ValueError:
                 print("No hay recursos disponibles.")
                 
-            asignacion = Asignacion(res.tipo, persona) # se crea  un historial de recursos  asignados
+            asignacion = Asignacion(res.tipo, persona, 1) # se crea  un historial de recursos  asignados
             print(asignacion)
             self.asignaciones.insertStart( asignacion )
             

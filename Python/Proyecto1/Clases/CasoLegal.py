@@ -2,12 +2,15 @@ from .persona import Persona
 
 estados = {0: "Pendiente", 1: "Resuelto"}
 class ProcesoLegal:
-    def __init__(self, persona):
+    def __init__(self, persona: Persona):
         """:
         Args:
         """
         self.estado = estados[0]
-        self.persona = persona
+        self.nombre = persona.nombre
+        self.id = persona.id
+        self.nacionalidad = persona.nacionalidad
+        self.motivo = persona.motivo
 
     def __str__(self):
         """Genera una representación en forma de cadena del caso.
@@ -20,5 +23,6 @@ class ProcesoLegal:
             f"Nombre del repatriado: {self.nombre}\n"
             f"ID: {self.id}\n"
             f"Nacionalidad: {self.nacionalidad}\n"
+            f"Motivo: {self.motivo}\n"
         )
         
