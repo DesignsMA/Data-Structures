@@ -37,3 +37,13 @@ class Persona:
             f"Prioridad: {self.prioridad}\n"
             f"Motivo de desplazamiento: {self.motivo}"
         )
+        
+    def datosBasicos(self):
+        """
+        Datos básicos de una persona, nombre, id, nacionalidad
+        """
+        return (
+            f"Nombre: {self.nombre}\n"
+            f"ID: {self.id}\n"
+            f"Nacionalidad: {self.nacionalidad}\n"
+        )

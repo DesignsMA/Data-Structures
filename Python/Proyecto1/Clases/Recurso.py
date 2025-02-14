@@ -2,14 +2,24 @@
 tipos = {0: "Alimentos", 1: "Refugios", 2: "Asesoría Legal"}
 
 class Recurso:
+    """
+    Representación de un recurso disponible.
+
+    Atributos de instancia:
+        tipo (int): Tipo de recurso:
+                    0 - Alimentos | 1 - Refugios | 2 - Asesoría Legal
+        
+        cantidad (int): Número de recursos de este tipo disponibles.
+        
+        usados (int): Cantidad de recursos usados.
+    """
     def __init__(self, tipo: int, cantidad: int):
         """
-        Representación de un recurso disponible.
-
         Args:
             tipo (int): Tipo de recurso:
                         0 - Alimentos | 1 - Refugios | 2 - Asesoría Legal
             cantidad (int): Número de recursos de este tipo disponibles.
+
         Raises:
             ValueError: Si la cantidad es invalida.
         
@@ -21,6 +31,7 @@ class Recurso:
         
         self.tipo = tipos[tipo]  # Asigna el nombre del tipo de recurso
         self.cantidad = cantidad  # Asigna la cantidad disponible
+        self.usados =  0 # inicializando  usados
 
     def __str__(self):
         """
@@ -41,6 +52,7 @@ class Recurso:
         if cantidad_usada > self.cantidad:
             raise ValueError(f"No hay suficientes recursos. Disponibles: {self.cantidad}")
         self.cantidad -= cantidad_usada
+        self.usados += 1 # solo si se usa
 
     def agregar(self, cantidad_agregada: int):
         """
