@@ -6,7 +6,10 @@ class GestionAyuda():
     #Variables de clase, compartidas entre clases
     """
     Sistema de Gestión de Ayuda para Indocumentados Desplazados
-
+    
+    Atributos de clase:
+        atendidos (int): Número de indocumentados atendidos
+    
     Atributos de instancia:
         registros (Cola): descripcion y uso
         urgentes (Pila):
@@ -14,6 +17,7 @@ class GestionAyuda():
         asignaciones (ListaDoble):
         seguimientos (ListaCircular):
     """
+    atendidos = 0
     
     
     def __init__(self):
@@ -25,6 +29,10 @@ class GestionAyuda():
         self.seguimientos = ListaCircular() # Instancia de lista circular
         
         #Inicializando recursos, se tiene 0 disponibles de cada tipo
+        #Cada recurso tiene una variable para, cantidad disponible, usados
         self.recursos.insertEnd( Recurso(0,0) )
         self.recursos.insertEnd( Recurso(1,0) )
         self.recursos.insertEnd( Recurso(2,0) )
+
+    def registrar(self):
+        pass
