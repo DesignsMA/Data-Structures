@@ -4,6 +4,7 @@ from Scripts.PolinomioDireccionamiento import polinomio_direccionamiento
 
 class GestionAyuda():
     #Variables de clase, compartidas entre clases
+    # documento
     """
     Sistema de Gestión de Ayuda para Indocumentados Desplazados
     
