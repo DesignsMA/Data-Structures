@@ -93,7 +93,7 @@ class ListaDoble:
         """Imprime la lista completa."""
         current = self.root
         while current is not None:
-            print(current.data, end=" <-> ")
+            print(current.data, end="\n\n")
             current = current.sig
         print("None")
 

@@ -37,7 +37,7 @@ class Recurso:
         """
         Representación en cadena del recurso.
         """
-        return f"Recurso: {self.tipo} | Disponibles: {self.cantidad}"
+        return f"Recurso: {self.tipo} | Disponibles: {self.cantidad} | Usados: {self.usados}"
 
     def usar(self, cantidad_usada: int):
         """

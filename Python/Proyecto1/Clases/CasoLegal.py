@@ -22,6 +22,11 @@ class ProcesoLegal:
         self.nacionalidad = persona.nacionalidad
         self.motivo = persona.motivo
 
+    def resolverCaso(self):
+        print("\nEl caso fue actualizado como resuelto.\n")
+        self.estado = estados[1]
+
+    
     def __str__(self):
         """Genera una representación en forma de cadena del caso.
 
@@ -35,4 +40,5 @@ class ProcesoLegal:
             f"Nacionalidad: {self.nacionalidad}\n"
             f"Motivo: {self.motivo}\n"
         )
+    
         

@@ -1,0 +1,11 @@
+----Reporte Semanal | 2025-02-15----Personas atendidas = 1
+                   ----Recursos usados----
+                   <bound method Recurso.__str__ of <Clases.recurso.Recurso object at 0x0000026241E9E330>> 
+                   <bound method Recurso.__str__ of <Clases.recurso.Recurso object at 0x0000026241E9E390>>
+                   <bound method Recurso.__str__ of <Clases.recurso.Recurso object at 0x0000026241E9E3F0>>
+----Casos Legales---Estado del caso: Resuelto
+Nombre del repatriado: Marco
+ID: e3255b45-3737-4e79-aa5f-c2f8f8faf221
+Nacionalidad: Mexicano
+Motivo: Trump
+

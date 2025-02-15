@@ -7,7 +7,12 @@ class ListaCircular:
     def __init__(self):
         self.root = None  # La lista empieza vacía
         self.current = None  # Nodo actual para recorrer
-    
+
+    def empty(self):
+        if self.root is None:
+            return True
+        else:
+            return  False
     def insertEnd(self, data):
         """Inserta un nodo al final de la lista."""
         new = Nodo(data)
@@ -141,15 +146,14 @@ class ListaCircular:
         print(f"La posición {n} no existe en la lista.")
         return None
     
-    def printOne(self):
-        """Imprime un nodo por vez, recorriendo en cada llamada."""
+    def next(self):
+        """Recorre los elementos."""
         if self.root is None:
             print("Lista vacía.")
             return
         if self.current is None:
             self.current = self.root
-        print(self.current.data)
-        self.current = self.current.sig
+        self.current = self.current.sig # mover al siguiente
 
 def interact():
     # Interacción con el usuario
