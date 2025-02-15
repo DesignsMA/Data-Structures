@@ -2,9 +2,19 @@ from .persona import Persona
 
 estados = {0: "Pendiente", 1: "Resuelto"}
 class ProcesoLegal:
+    """
+    Representación de un proceso legal.
+    
+    Atributos de instancia:
+        estado (str): Estado del caso | Pendiente - Resuelto.
+        nombre (str): Nombre del repatriado.
+        id (str): ID del repatriado.
+        motivo (str): Motivo del desplazamiento.
+    """
     def __init__(self, persona: Persona):
-        """:
+        """
         Args:
+            persona (Persona): Persona que abre el caso.        
         """
         self.estado = estados[0]
         self.nombre = persona.nombre

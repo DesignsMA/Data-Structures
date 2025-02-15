@@ -1,10 +1,12 @@
+## Importación de clases y estructuras necesarias desde otros archivos
 from Clases import * # Necesita __init__.py para funcionar
 from Estructuras import *
 from Scripts.PolinomioDireccionamiento import polinomio_direccionamiento
 
-class GestionAyuda():
+#Definicion de la clase principal para gestionar la sistencia 
+class GestionAyuda(): #Gestionar la asistencia a personas indocumentadas desplazadas
     #Variables de clase, compartidas entre clases
-    # documento
+    
     """
     Sistema de Gestión de Ayuda para Indocumentados Desplazados
     
@@ -18,10 +20,11 @@ class GestionAyuda():
         asignaciones (ListaDoble):
         seguimientos (ListaCircular):
     """
-    atendidos = 0
-    tipos = {0: "Alimentos", 1: "Refugios", 2: "Asesoría Legal"}
+    atendidos = 0 # variable de clase, representa el total de personas atendidas 
+    tipos = {0: "Alimentos", 1: "Refugios", 2: "Asesoría Legal"} #tipos de ayuda disponibles
 
     def __init__(self):
+        """Sistema de Gestión de Ayuda para Indocumentados Desplazados"""
         #Variables de instancia, unicas de instancia
         self.registros = Cola() # Instancia de cola lineal
         self.urgentes = Pila() # Instancia de pila
@@ -32,35 +35,40 @@ class GestionAyuda():
         #Inicializando recursos, se tiene 0 disponibles de cada tipo
         #Cada recurso tiene una variable para, cantidad disponible, usados
         
-        self.recursos.insertEnd( Recurso(0,0) )
-        self.recursos.insertEnd( Recurso(1,0) )
-        self.recursos.insertEnd( Recurso(2,0) )
+        self.recursos.insertEnd( Recurso(0,0) ) #Alimentos
+        self.recursos.insertEnd( Recurso(1,0) ) #Refugios 
+        self.recursos.insertEnd( Recurso(2,0) ) #Asesoria legal
 
     def registrar(self): # Se le tiene que preguntar al usuario la persona
+        """
+        Registra una persona indocumentada y la coloca en una cola o pila dependiendo
+        de su urgencia.
+        """
         nombre=input("ingrese el nombre: ")
         motivo=input("ingrese el motivo de la repatriación: ")
         nacionalidad=input("ingrese la nacionalidad: ")
         prioridad =  int( input("Ingrese la urgencia:\nRegular 0 | Urgente 1: ") )
-        persona = None
+        persona = None #Se inicializa la variable persona
         print(prioridad)
         
         try:
-            persona = Persona(nombre, nacionalidad, motivo, prioridad)
+            #Se crea una nueva instancia de Persona
+            persona = Persona(nombre, nacionalidad, motivo, prioridad) # Generar una instancia de la clase persona
         except ValueError as e:
-            print(e)
+            print(e) #Manejo de error si los datos no son validos 
             return False
-        
         # Solo ejecuta si no hay error
         if prioridad == 0: # caso regular se manda a cola
             self.registros.encolar(persona)
             print(self.registros)
-        elif prioridad == 1: # caso urgente
+        elif prioridad == 1: # caso urgente, va a la pila
             self.urgentes.push(persona)
             self.urgentes.show()
 
     
         # Administrador añade recursos a las variables de instancia
-    def gestionarRecursos(self):        
+    def gestionarRecursos(self):
+        """Añade recursos del tipo seleccionado por el usuario"""
         print("0 - Alimentos | 1 - Refugios | 2 - Asesoría Legal")
         tipo = int( input("Ingresa que tipo de recurso se va agregar: ") )
         
@@ -82,6 +90,16 @@ class GestionAyuda():
             print("Ese tipo no es valido.")
     
     def atender(self):
+        """
+        Atiende a una persona registrada, primero a las que tengan una prioridad urgente
+        (Pila), si la pila esta vacia, atiende a las que tengan una prioridad regular (Cola)
+        
+        Ademas, asigna recursos a esa persona ( Alimentos, refugios, asesoría legal)
+        
+        En el caso de que la persona necesite asesoría legal, e abre un proceso legal
+        pendiente de resolver.
+        """
+        
         persona = Persona
         try:
             if self.urgentes.empty() == False: # si hay personas urgentes
