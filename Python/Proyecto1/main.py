@@ -1,7 +1,6 @@
 # Importación de clases y estructuras necesarias desde otros archivos
 from Clases import * # Necesita __init__.py para funcionar
 from Estructuras import *
-from Scripts.PolinomioDireccionamiento import polinomio_direccionamiento
 from datetime import datetime # Libreria  de fechas
 import os
 
