@@ -46,12 +46,11 @@ class GestionAyuda(): #Gestionar la asistencia a personas indocumentadas desplaz
         Registra una persona indocumentada y la coloca en una cola o pila dependiendo
         de su urgencia.
         """
-        nombre=input("ingrese el nombre: ")
-        motivo=input("ingrese el motivo de la repatriación: ")
-        nacionalidad=input("ingrese la nacionalidad: ")
+        nombre=input("\bIngrese el nombre: ")
+        motivo=input("Ingrese el motivo de la repatriación: ")
+        nacionalidad=input("Ingrese la nacionalidad: ")
         prioridad =  int( input("Ingrese la urgencia:\nRegular 0 | Urgente 1: ") )
         persona = None #Se inicializa la variable persona
-        print(prioridad)
         
         try:
             #Se crea una nueva instancia de Persona
@@ -62,10 +61,10 @@ class GestionAyuda(): #Gestionar la asistencia a personas indocumentadas desplaz
         # Solo ejecuta si no hay error
         if prioridad == 0: # caso regular se manda a cola
             self.registros.encolar(persona)
-            print(self.registros)
+            print("\n", self.registros.show())
         elif prioridad == 1: # caso urgente, va a la pila
             self.urgentes.push(persona)
-            self.urgentes.show()
+            print("\n", self.urgentes.show())
 
     
         # Administrador añade recursos a las variables de instancia
@@ -111,6 +110,8 @@ class GestionAyuda(): #Gestionar la asistencia a personas indocumentadas desplaz
 
 
             print(f"Atendiendo a:\n{persona.datosBasicos()}", end="\n\n")
+            
+            print(f"{self.recursos.get_element_at(0)}\n{self.recursos.get_element_at(1)}\n{self.recursos.get_element_at(2)}\n")
 
             x = int( input("¿Que atención necesita?\n0 - Alimentos | 1 - Refugios | 2 - Asesoría Legal\n: ") )
 
@@ -120,7 +121,10 @@ class GestionAyuda(): #Gestionar la asistencia a personas indocumentadas desplaz
                     if isinstance(res, Recurso): # si es un recurso
                         res.usar(1)
                 except ValueError:
-                    print("No hay recursos disponibles.")
+                    print(f"No hay recursos disponibles\n\n{persona.datosBasicos()}\nFue formado de nuevo como prioritario.")
+                    persona.prioridad = "Urgente"
+                    self.urgentes.push(persona)
+                    return
 
                 asignacion = Asignacion(res.tipo, persona, 1) # se crea  un historial de recursos  asignados
                 print(asignacion) #Muestra la asignacion realizada
@@ -162,28 +166,32 @@ class GestionAyuda(): #Gestionar la asistencia a personas indocumentadas desplaz
     def generarReporte(self):
         fecha = datetime.now().strftime("%Y-%m-%d")  # Formato: Año-Mes-Día #obtener la cadena de la fecha actual
         ruta_archivo = os.path.join("Reportes", f"Reporte-Semanal-{fecha}.txt")
-        file = open(ruta_archivo, "w") #modo de escritura, siempre es un reporte diferente
-        file.write(f"----Reporte Semanal | {fecha}----") # cabezera del reporte
-        file.write(f"Personas atendidas = {self.atendidos}") # numero de personas atendidas
+        file = open(ruta_archivo, "w+", encoding="UTF-8") #modo de escritura, siempre es un reporte diferente
+        file.write(f"----Reporte Semanal | {fecha}----\n") # cabezera del reporte
+        file.write(f"\nPersonas atendidas = {self.atendidos}\n") # numero de personas atendidas
         
         file.write(f"""
-                   ----Recursos usados----
-                   {self.recursos.get_element_at(0).__str__} 
-                   {self.recursos.get_element_at(1).__str__}
-                   {self.recursos.get_element_at(2).__str__}\n""")
+----Recursos usados----
+{self.recursos.get_element_at(0).__str__()} 
+{self.recursos.get_element_at(1).__str__()}
+{self.recursos.get_element_at(2).__str__()}
+""")
 
-        file.write("----Casos Legales---")
+        file.write("\n----Casos Legales---\n")
         if not self.seguimientos.empty():
             self.seguimientos.current = self.seguimientos.root # mover actual al inicio
             CasoLegal = self.seguimientos.current.data # obtener el caso actual
             bol = True
             if isinstance(CasoLegal, ProcesoLegal) and CasoLegal is not None:
-                while( CasoLegal !=  self.seguimientos.root and bol):
+                while( CasoLegal !=  self.seguimientos.root.data or bol):
                     if bol:
                         bol = False #indicar que no es la primera vez que se recorre
+                        
                     file.write(f"{CasoLegal}\n") # se escribe el caso
                     self.seguimientos.next() # siguiente caso
                     CasoLegal = self.seguimientos.current.data
+        
+        print(file.read()) #imprimir reporte
         file.close()
         
         
@@ -201,7 +209,7 @@ def menu():
         print("6. Historial de asignaciones")
         print("7. Salir")
         
-        opt= input("Seleccione una opcion")
+        opt= input("\nSeleccione una opcion: ")
         
         if opt == '1':
             sistema.registrar()

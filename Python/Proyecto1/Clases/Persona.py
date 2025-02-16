@@ -31,11 +31,11 @@ class Persona:
         Representación en cadena de la persona.
         """
         return (
-            f"ID: {self.id}\n"
+            f"\nID: {self.id}\n"
             f"Nombre: {self.nombre}\n"
             f"Nacionalidad: {self.nacionalidad}\n"
             f"Prioridad: {self.prioridad}\n"
-            f"Motivo de desplazamiento: {self.motivo}"
+            f"Motivo de desplazamiento: {self.motivo}\n"
         )
         
     def datosBasicos(self):

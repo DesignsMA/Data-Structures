@@ -34,7 +34,7 @@ class ProcesoLegal:
             str: Cadena con los detalles de la asignación.
         """
         return (
-            f"Estado del caso: {self.estado}\n"
+            f"\nEstado del caso: {self.estado}\n"
             f"Nombre del repatriado: {self.nombre}\n"
             f"ID: {self.id}\n"
             f"Nacionalidad: {self.nacionalidad}\n"

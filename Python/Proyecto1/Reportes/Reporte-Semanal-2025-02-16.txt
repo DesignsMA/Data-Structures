@@ -1,0 +1,24 @@
+----Reporte Semanal | 2025-02-16----
+
+Personas atendidas = 3
+
+----Recursos usados----
+Recurso: Alimentos | Disponibles: 2 | Usados: 1 
+Recurso: Refugios | Disponibles: 0 | Usados: 0
+Recurso: Asesoría Legal | Disponibles: 2 | Usados: 2
+
+----Casos Legales---
+
+Estado del caso: Pendiente
+Nombre del repatriado: Diego
+ID: 7ce44076-41e7-4a04-9483-0bea54f5061d
+Nacionalidad: Chileno
+Motivo: Traspaso ilegal en la frontera de los estados unidos.
+
+
+Estado del caso: Resuelto
+Nombre del repatriado: Lian Ming
+ID: ee970243-8743-4efb-9f5b-83a0b8f3b511
+Nacionalidad: Chino
+Motivo: Deportación de eua.
+

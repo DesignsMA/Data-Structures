@@ -48,3 +48,7 @@ class Cola:
     def invertir(self):
         """Invierte el orden de los elementos en la cola."""
         self.items.reverse()
+    
+    def show(self):
+        """Retorna la representación en cadena de la cola, incluso para objetos personalizados."""
+        return "[" + ", ".join(str(item) for item in self.items) + "]"

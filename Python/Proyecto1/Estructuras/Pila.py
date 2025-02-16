@@ -21,12 +21,15 @@ class Pila:
         return self.lista.pop()  # Elimina y retorna el último elemento de la lista
 
     def show(self):
-        """Muestra los elementos de la pila."""
+        """Retorna una representación en cadena de los elementos de la pila."""
         if self.empty():
-            print("La pila está vacía")
+            return "La pila está vacía"
         else:
-            for i in range(self.tope - 1, -1, -1):  # Recorre la lista en orden inverso
-                print(f"[{i}] -> {self.lista[i]}")
+            return "\n".join(
+                f"[{i}] -> {self.lista[i]}" 
+                for i in range(self.tope - 1, -1, -1)
+            )
+
 
     def size(self):
         """Retorna el número de elementos en la pila."""
