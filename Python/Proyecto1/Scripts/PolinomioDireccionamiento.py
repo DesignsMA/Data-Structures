@@ -10,7 +10,6 @@ def print_matrix(dim, pos):
     if dim > 0:
         for j in range(dim):
             print(f"[{pos[j]}]", end="")  # Se imprimen las posiciones
-    print()
 
 
 def polinomio_direccionamiento(dim, pos, sizes, bytes):
@@ -19,7 +18,7 @@ def polinomio_direccionamiento(dim, pos, sizes, bytes):
 
     Args:
         dim (int): Número de dimensiones de la matriz.
-        pos (list): Lista de posiciones en cada dimensión | empezando desde 1.
+        pos (list): Lista de posiciones en cada dimensión | empezando desde 0.
         sizes (list): Lista de tamaños de cada dimensión | empezando desde 1.
         bytes (int): Número de bytes del tipo de dato.
 
@@ -34,8 +33,8 @@ def polinomio_direccionamiento(dim, pos, sizes, bytes):
         for i in range(n):
             r *= sizes[i]
 
-        # Suma al resultado: r1 * r2 * ... * rn-1 * (kn - infn)
-        dir += r * (pos[n] -1) 
+        # Suma al resultado: r1 * r2 * ... * rn-1 * kn
+        dir += r * pos[n]
     return dir * bytes  # Multiplica por el tamaño del tipo de dato
 
 def main():
@@ -86,8 +85,8 @@ def main():
             try:
                 print_matrix(i, pos)
                 pos[i] = int(input(f"[x]\nIntroduzca la posicion {i+1}: "))
-                if pos[i] < 0 or pos[i] > sizes[i]:
-                    print("\nLa posicion no puede ser negativa o mayor al rango de su dimension\n")
+                if pos[i] < 0 or pos[i] >= sizes[i]:
+                    print(f"\nLa posicion no puede ser negativa o mayor o igual al rango de su dimension (0-{sizes[i]-1})\n")
                 else:
                     break
             except ValueError:
