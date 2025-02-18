@@ -1,0 +1,17 @@
+----Reporte Semanal | 2025-02-17----
+
+Personas atendidas = 1
+
+----Recursos usados----
+Recurso: Alimentos | Disponibles: 0 | Usados: 0 
+Recurso: Refugios | Disponibles: 0 | Usados: 0
+Recurso: Asesoría Legal | Disponibles: 0 | Usados: 1
+
+----Casos Legales---
+
+Estado del caso: Resuelto
+Nombre del repatriado: Juan
+ID: 7a306736-a1de-44d8-9d60-8908035694a9
+Nacionalidad: Mexicano
+Motivo: Traspaso fronterizo.
+
