@@ -98,6 +98,16 @@ class Lista:
         print(f"La posición {n} no existe en la lista.")
         return None
     
+    def __str__(self):
+        """Retorna una cadena que representa la lista enlazada."""
+        current = self.root
+        result = ""
+        while current is not None:
+            result += str(current.data) + " -> "
+            current = current.sig
+        result += "None"
+        return result
+    
 def interact():
     # Interacción con el usuario
     lista = Lista()
@@ -128,3 +138,4 @@ def interact():
             break
         else:
             print("Opción inválida, intenta de nuevo.")
+            
