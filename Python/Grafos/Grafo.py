@@ -76,7 +76,6 @@ class Grafo():
                 for n in range( self.n ):
                     self.matrizCaminos[m,n] = matriz[m,n] or self.matrizCaminos[m,n]
         
-        
     def __str__(self):
         strO = '{\n'
         for vertice, lista in self.vertices.items():  # Iterar sobre claves y valores
