@@ -50,15 +50,15 @@ class Grafo():
             m+=1 # siguiente fila (vertice)
     
     def generarListasAdjacencia(self):
-    m = 0
-    for vertice, lista in self.vertices.items(): # recorrer diccionario
-        i = 0
-        for adj in self.matrizAdjacencia[m]: # recorrer cada elemento en la fila m
-            if adj == 1:  # si esta marcado como adjacente
-                lista.insertEnd( self.listaVertices[i] ) #adjuntar en la lista de adjacencia del vertice
-                break
-            i+=1
-        m+=1
+        m = 0
+        for vertice, lista in self.vertices.items(): # recorrer diccionario
+            i = 0
+            for adj in self.matrizAdjacencia[m]: # recorrer cada elemento en la fila m
+                if adj == 1:  # si esta marcado como adjacente
+                    lista.insertEnd( self.listaVertices[i] ) #adjuntar en la lista de adjacencia del vertice
+                    break
+                i+=1
+            m+=1
     
     def __str__(self):
         strO = '{\n'
