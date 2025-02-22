@@ -8,11 +8,10 @@ class Grafo():
         self.listaVertices = [key for key in self.vertices.keys()]
         self.matrizAdjacencia = matrizAdjacencia
         
-        if matrizAdjacencia.all() == None:
+        if matrizAdjacencia.all() == None or matrizAdjacencia.shape != (self.n, self.n): #caso por defecto o error
             self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn
-        elif matrizAdjacencia.shape != (self.n, self.n):
-            print("La matriz deberia ser de nxn donde n es el numero de vertices.\nLa matriz esta vacia.")
-            self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn
+            if matrizAdjacencia.shape != (self.n, self.n):
+                print("La matriz deberia ser de nxn donde n es el numero de vertices.\nLa matriz esta vacia.")
         else:
             self.generarListasAdjacencia() # generar  listas de adjacencia a partir de la matriz
                 
