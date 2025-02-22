@@ -14,18 +14,7 @@ class Grafo():
         else:
             self.matrizAdjacencia = matrizAdjacencia
             self.generarListasAdjacencia() # generar  listas de adjacencia a partir de la matriz
-            
-    def generarListasAdjacencia(self):
-        m = 0
-        for vertice, lista in self.vertices.items(): # recorrer diccionario
-            i = 0
-            for adj in self.matrizAdjacencia[m]: # recorrer cada elemento en la fila m
-                if adj == 1:  # si esta marcado como adjacente
-                    lista.insertEnd( self.listaVertices[i] ) #adjuntar en la lista de adjacencia del vertice
-                    break
-                i+=1
-            m+=1
-    
+                
     def definirAdjacencia(self):
         # Recorrer cada vértice y su lista de adyacencia
         for vertice, lista in self.vertices.items():
@@ -59,6 +48,17 @@ class Grafo():
                         break # si ya se encontro, salir
                     i+=1 # siguiente llave (columna)
             m+=1 # siguiente fila (vertice)
+    
+    def generarListasAdjacencia(self):
+    m = 0
+    for vertice, lista in self.vertices.items(): # recorrer diccionario
+        i = 0
+        for adj in self.matrizAdjacencia[m]: # recorrer cada elemento en la fila m
+            if adj == 1:  # si esta marcado como adjacente
+                lista.insertEnd( self.listaVertices[i] ) #adjuntar en la lista de adjacencia del vertice
+                break
+            i+=1
+        m+=1
     
     def __str__(self):
         strO = '{\n'
