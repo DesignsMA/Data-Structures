@@ -1,12 +1,13 @@
+from Grafo import Grafo
 # Definimos el grafo mediante un diccionario de phyton
-grafo = {
+grafo = Grafo( dictionarioAdjacencia= {
     'A': ['B', 'C'],
     'B': ['D', 'E'],
     'C': [],
     'D': ['F'],
     'E': [],
     'F': [],
-}
+})
 
 # DFS o busqueda profunda
 def dfs_profundidad(grafo, inicio):
@@ -20,7 +21,7 @@ def dfs_profundidad(grafo, inicio):
             verificado.add(nodo)  # Verifica el nodo añadiendolo al set para llevar el orden del camino
             l.append(nodo)
             print(nodo)        # Imrpime el nodo actual (para visualizar)
-            pila.extend(reversed(grafo[nodo]))  # Añade nodos hijos a la pila en orden reverso 
+            pila.extend(reversed(grafo.vertices[nodo]))  # Añade nodos hijos a la pila en orden reverso 
     print(l)        
             
             

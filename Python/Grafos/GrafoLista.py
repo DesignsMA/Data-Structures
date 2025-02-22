@@ -4,25 +4,20 @@ from Estructuras import *
 from pprint import pp
 class Grafo():
     
-    def __init__(self, vertices: list = None, matrizAdjacencia: np.ndarray = None, dictionarioAdjacencia: dict = None):
-        if dictionarioAdjacencia != None:
-            self.vertices = dictionarioAdjacencia
-            self.listaVertices = [key for key in dictionarioAdjacencia.keys()]
-            self.n = len( self.listaVertices )
-        else:
-            self.n = len(vertices)
-            self.vertices = { vertices[i]: [] for i in range(len(vertices)) } # crear diccionario de vertices con su lista ligada
-            self.listaVertices = [key for key in self.vertices.keys()]
-            
-        self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn
+    def __init__(self, vertices: list, matrizAdjacencia: np.ndarray = None):
+        self.n = len(vertices)
+        self.vertices = { vertices[i]: Lista() for i in range(len(vertices)) } # crear diccionario de vertices con su lista ligada
+        self.listaVertices = [key for key in self.vertices.keys()]
+        self.matrizAdjacencia = matrizAdjacencia
         self.matrizCaminos = None
         self.matricesCaminos = []
         
-        if matrizAdjacencia != None:
-            if matrizAdjacencia.shape != (self.n, self.n): #caso por defecto o error
+        if matrizAdjacencia.all() == None or matrizAdjacencia.shape != (self.n, self.n): #caso por defecto o error
+            self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn
+            if matrizAdjacencia.shape != (self.n, self.n):
                 print("La matriz deberia ser de nxn donde n es el numero de vertices.\nLa matriz esta vacia.")
-            else:
-                self.generarListasAdjacencia() # generar  listas de adjacencia a partir de la matriz
+        else:
+            self.generarListasAdjacencia() # generar  listas de adjacencia a partir de la matriz
                 
     def definirAdjacencia(self):
         # Recorrer cada vértice y su lista de adyacencia
@@ -37,8 +32,8 @@ class Grafo():
                     break  # Salir del bucle para este vértice
                 
                 if adj in self.vertices:  # Verificar si el vértice adyacente existe
-                    if not adj in lista:  # Evitar duplicados
-                        lista.append(adj)  # Agregar a la lista de adyacencia
+                    if not lista.exists(adj):  # Evitar duplicados
+                        lista.insertEnd(adj)  # Agregar a la lista de adyacencia
                         print(f"'{adj}' agregado como adyacente a '{vertice}'.")
                     else:
                         print(f"'{adj}' ya está en la lista de adyacencia de '{vertice}'.")
@@ -48,8 +43,8 @@ class Grafo():
     def generarMatrizAdjacencia(self):
         m = 0
         for vertice, lista in self.vertices.items():  # Iterar sobre llaves y valores
-            for n in range( len( lista ) ): # por cada vertice, verificar cada elemento de su lista de adjacencia
-                adj = lista[n]
+            for n in range( lista.len() ): # por cada vertice, verificar cada elemento de su lista de adjacencia
+                adj = lista.get_element_at(n)
                 i = 0
                 for key in self.listaVertices: #recorrer lista de llaves (columnas)
                     if key == adj: # si la llave en posicion i es igual al adjacente en posicion n de la lista
@@ -64,7 +59,7 @@ class Grafo():
             i = 0
             for adj in self.matrizAdjacencia[m]: # recorrer cada elemento en la fila m
                 if adj == 1:  # si esta marcado como adjacente
-                    lista.append( self.listaVertices[i] ) #adjuntar en la lista de adjacencia del vertice
+                    lista.insertEnd( self.listaVertices[i] ) #adjuntar en la lista de adjacencia del vertice
                     break
                 i+=1
             m+=1
@@ -84,18 +79,11 @@ class Grafo():
     def __str__(self):
         strO = '{\n'
         for vertice, lista in self.vertices.items():  # Iterar sobre claves y valores
-            strO += f"  '{vertice}': {lista},\n"  # Incluir clave y valor
+            strO += f"  '{vertice}': {lista.__str__()},\n"  # Incluir clave y valor
         strO += '}'
         return strO
 
-grafo = Grafo( dictionarioAdjacencia= {
-    'A': ['B', 'C'],
-    'B': ['D', 'E'],
-    'C': [],
-    'D': ['F'],
-    'E': [],
-    'F': [],
-})
+grafo = Grafo(['A', 'B', 'C'], np.array( [ [0, 1, 0], [0, 0, 1], [1, 0, 0] ], int ) )
 print(grafo)
 grafo.generarMatrizAdjacencia()
 print(grafo.matrizAdjacencia)
