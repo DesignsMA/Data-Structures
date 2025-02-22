@@ -96,6 +96,7 @@ grafo = Grafo( dictionarioAdjacencia= {
     'E': [],
     'F': [],
 })
+
 print(grafo)
 grafo.generarMatrizAdjacencia()
 print(grafo.matrizAdjacencia)
