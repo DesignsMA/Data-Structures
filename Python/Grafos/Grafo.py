@@ -6,13 +6,14 @@ class Grafo():
         self.n = len(vertices)
         self.vertices = { vertices[i]: Lista() for i in range(len(vertices)) } # crear diccionario de vertices con su lista ligada
         self.listaVertices = [key for key in self.vertices.keys()]
+        self.matrizAdjacencia = matrizAdjacencia
         
         if matrizAdjacencia.all() == None:
             self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn
         elif matrizAdjacencia.shape != (self.n, self.n):
             print("La matriz deberia ser de nxn donde n es el numero de vertices.\nLa matriz esta vacia.")
+            self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn
         else:
-            self.matrizAdjacencia = matrizAdjacencia
             self.generarListasAdjacencia() # generar  listas de adjacencia a partir de la matriz
                 
     def definirAdjacencia(self):
