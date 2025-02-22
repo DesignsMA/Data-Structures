@@ -2,10 +2,29 @@ import numpy as np
 from Estructuras import *
 class Grafo():
     
-    def __init__(self, vertices: list = []):
+    def __init__(self, vertices: list, matrizAdjacencia: np.ndarray = None):
         self.n = len(vertices)
-        self.matrizAdjacencia = np.zeros((self.n, self.n))  # Crear matriz de nxn
         self.vertices = { vertices[i]: Lista() for i in range(len(vertices)) } # crear diccionario de vertices con su lista ligada
+        self.listaVertices = [key for key in self.vertices.keys()]
+        
+        if matrizAdjacencia.all() == None:
+            self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn
+        elif matrizAdjacencia.shape != (self.n, self.n):
+            print("La matriz deberia ser de nxn donde n es el numero de vertices.\nLa matriz esta vacia.")
+        else:
+            self.matrizAdjacencia = matrizAdjacencia
+            self.generarListasAdjacencia() # generar  listas de adjacencia a partir de la matriz
+            
+    def generarListasAdjacencia(self):
+        m = 0
+        for vertice, lista in self.vertices.items(): # recorrer diccionario
+            i = 0
+            for adj in self.matrizAdjacencia[m]: # recorrer cada elemento en la fila m
+                if adj == 1:  # si esta marcado como adjacente
+                    lista.insertEnd( self.listaVertices[i] ) #adjuntar en la lista de adjacencia del vertice
+                    break
+                i+=1
+            m+=1
     
     def definirAdjacencia(self):
         # Recorrer cada vértice y su lista de adyacencia
@@ -30,10 +49,16 @@ class Grafo():
 
     def generarMatrizAdjacencia(self):
         m = 0
-        for vertice, lista in self.vertices.items():  # Iterar sobre claves y valores
-            for n in range( lista.len() ): # por cada fila, recorrer longitud de la lista columnas
-                self.matrizAdjacencia[m,n] =
-        
+        for vertice, lista in self.vertices.items():  # Iterar sobre llaves y valores
+            for n in range( lista.len() ): # por cada vertice, verificar cada elemento de su lista de adjacencia
+                adj = lista.get_element_at(n)
+                i = 0
+                for key in self.listaVertices: #recorrer lista de llaves (columnas)
+                    if key == adj: # si la llave en posicion i es igual al adjacente en posicion n de la lista
+                        self.matrizAdjacencia[m,i] = 1 # Marcar como adjacente
+                        break # si ya se encontro, salir
+                    i+=1 # siguiente llave (columna)
+            m+=1 # siguiente fila (vertice)
     
     def __str__(self):
         strO = '{\n'
@@ -42,7 +67,7 @@ class Grafo():
         strO += '}'
         return strO
 
-grafo = Grafo(['A', 'B', 'C', 'D'])
+grafo = Grafo(['A', 'B', 'C'], np.array( [ [0, 1, 0], [0, 0, 1], [1, 0, 0] ], int ) )
 print(grafo)
-grafo.definirAdjacencia()
-print(grafo)
+grafo.generarMatrizAdjacencia()
+print(grafo.matrizAdjacencia)
