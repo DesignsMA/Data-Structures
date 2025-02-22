@@ -77,6 +77,15 @@ class Lista:
             print(current.data, end=" -> ")
             current = current.sig
         print("None")
+        
+    def len(self):
+        """Retorna el numero de  elementos de la lista."""
+        n = 0
+        current = self.root
+        while current is not None:
+            current = current.sig
+            n += 1
+        return n
     
     def get_element_at(self, n):
         """
