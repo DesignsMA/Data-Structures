@@ -1,5 +1,7 @@
 import numpy as np
+from numpy import linalg
 from Estructuras import *
+from pprint import pp
 class Grafo():
     
     def __init__(self, vertices: list, matrizAdjacencia: np.ndarray = None):
@@ -7,6 +9,8 @@ class Grafo():
         self.vertices = { vertices[i]: Lista() for i in range(len(vertices)) } # crear diccionario de vertices con su lista ligada
         self.listaVertices = [key for key in self.vertices.keys()]
         self.matrizAdjacencia = matrizAdjacencia
+        self.matrizCaminos = None
+        self.matricesCaminos = []
         
         if matrizAdjacencia.all() == None or matrizAdjacencia.shape != (self.n, self.n): #caso por defecto o error
             self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn
@@ -60,6 +64,19 @@ class Grafo():
                 i+=1
             m+=1
     
+    def generarMatrizDeCaminos(self):
+        caminos = self.matrizAdjacencia
+        for n in range(1, self.n): # desde 1 hasta  n-1
+            caminos = np.matmul( caminos, self.matrizAdjacencia, dtype= int)
+            self.matricesCaminos.append(caminos) # generar matriz de caminos de longitud n+1
+        
+        self.matrizCaminos = self.matrizAdjacencia
+        for matriz in self.matricesCaminos: # generar matriz de todos los caminos
+            for m in range( self.n ):
+                for n in range( self.n ):
+                    self.matrizCaminos[m,n] = matriz[m,n] or self.matrizCaminos[m,n]
+        
+        
     def __str__(self):
         strO = '{\n'
         for vertice, lista in self.vertices.items():  # Iterar sobre claves y valores
@@ -71,3 +88,6 @@ grafo = Grafo(['A', 'B', 'C'], np.array( [ [0, 1, 0], [0, 0, 1], [1, 0, 0] ], in
 print(grafo)
 grafo.generarMatrizAdjacencia()
 print(grafo.matrizAdjacencia)
+grafo.generarMatrizDeCaminos()
+pp(grafo.matricesCaminos)
+pp(grafo.matrizCaminos)
