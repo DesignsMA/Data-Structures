@@ -10,6 +10,9 @@ class Cola:
     def encolar(self, elemento):
         """Agrega un elemento al final de la cola."""
         self.items.append(elemento)
+    
+    def encolarLista(self, lista: list):
+        self.items.extend(lista)
 
     def desencolar(self):
         """Elimina y devuelve el primer elemento de la cola."""
