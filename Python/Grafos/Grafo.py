@@ -22,7 +22,6 @@ class Grafo():
                 self.matrizAdjacencia = matrizAdjacencia
                 self.generarListasAdjacencia() # generar  listas de adjacencia a partir de la matriz
                 
-                
         self.matrizCaminos = None
         self.matricesCaminos = []
                 
