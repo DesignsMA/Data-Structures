@@ -1,5 +1,4 @@
 import numpy as np
-from numpy import linalg
 from Estructuras import *
 from pprint import pp
 class Grafo():
@@ -15,7 +14,6 @@ class Grafo():
             self.listaVertices = [key for key in self.vertices.keys()]
             
         self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn de ceros
-        
         
         if matrizAdjacencia.all() != None and diccionarioAdjacencia == None: # si se inicializa con la matriz de adjacencia, y no un diccionario
             if matrizAdjacencia.shape != (self.n, self.n): #caso por defecto o error
