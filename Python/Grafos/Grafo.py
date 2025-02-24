@@ -4,10 +4,10 @@ from Estructuras import *
 from pprint import pp
 class Grafo():
     
-    def __init__(self, vertices: list = None, matrizAdjacencia: np.ndarray = np.array(0,dtype=None), dictionarioAdjacencia: dict = None):
-        if dictionarioAdjacencia != None: # si se esta inicializando con  un diccionario
-            self.vertices = dictionarioAdjacencia
-            self.listaVertices = [key for key in dictionarioAdjacencia.keys()]
+    def __init__(self, vertices: list = None, matrizAdjacencia: np.ndarray = np.array(0,dtype=None), diccionarioAdjacencia: dict = None):
+        if diccionarioAdjacencia != None: # si se esta inicializando con  un diccionario
+            self.vertices = diccionarioAdjacencia
+            self.listaVertices = [key for key in diccionarioAdjacencia.keys()]
             self.n = len( self.listaVertices )
         else: #si solo se inicializa con vertices
             self.n = len(vertices)
@@ -17,7 +17,7 @@ class Grafo():
         self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn de ceros
         
         
-        if matrizAdjacencia.all() != None and dictionarioAdjacencia == None: # si se inicializa con la matriz de adjacencia, y no un diccionario
+        if matrizAdjacencia.all() != None and diccionarioAdjacencia == None: # si se inicializa con la matriz de adjacencia, y no un diccionario
             if matrizAdjacencia.shape != (self.n, self.n): #caso por defecto o error
                 print("La matriz deberia ser de nxn donde n es el numero de vertices.\nLa matriz esta vacia.")
             else:

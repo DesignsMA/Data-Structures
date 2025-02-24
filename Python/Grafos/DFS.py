@@ -1,6 +1,6 @@
 from Grafo import Grafo
 # Definimos el grafo mediante un diccionario de phyton
-grafo = Grafo( dictionarioAdjacencia= {
+grafo = Grafo( diccionarioAdjacencia= {
     'A': ['B', 'C'],
     'B': ['D', 'E'],
     'C': [],
