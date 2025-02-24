@@ -3,20 +3,21 @@ from Estructuras import Cola
 from Grafo import Grafo
 
 def bfs_amplitud(grafo: Grafo, inicio):
-    espera = set()  # seguimiento de nodos procesados (aqui se irá viendo el orden del camino)
-    cola = Cola()  # se usa una pila para la busqueda profunda inicializandola con el primer nodo(inicio)
-    cola.encolar(inicio)
-    recorridoAmplitud = { grafo.listaVertices[i]: [] for i in range(grafo.n) }
+    espera = set()  # conjunto de vertices o nodos en espera
+    cola = Cola()  # instancia de clase Cola
+    cola.encolar(inicio) # encolar  (marcar como listo) al vertice inicial
+    recorridoAmplitud = { grafo.listaVertices[i]: [] for i in range(grafo.n) } # diccionario de grafo resultante
+    
     espera.update(recorridoAmplitud.keys()) # colocar vertices en espera
     espera.difference_update(inicio) # eliminar de la lista de espera | marcar listo
     
     while not cola.esta_vacia():  # Continua hasta que la cola esta vacía
         nodo = cola.desencolar()  # saca el nodo de la cola y lo almacena para ser usado despues
-        print(nodo)        # Imrpime el nodo actual (para visualizar)
-        for vertice in grafo.vertices[nodo]: #recorrer lista de vertices adyacentes
-            if vertice in espera:
+        print(nodo) # Imprime el nodo actual (para visualizar)
+        for vertice in grafo.vertices[nodo]: #recorrer lista de vertices adyacentes al nodo
+            if vertice in espera: # si el vertice actual esta en espera
                 cola.encolar(vertice) # encolar vertice
-                recorridoAmplitud[nodo].append(vertice) # representar  el recorrido
+                recorridoAmplitud[nodo].append(vertice) # añadir adyacentes en la lista del nodo
                 espera.difference_update(vertice) # eliminar de la lista de espera | marcar listo
                 
     return recorridoAmplitud
@@ -34,10 +35,7 @@ grafo = Grafo( diccionarioAdjacencia= {
     'Y': ['X', 'U'],
     'U': ['T', 'X', 'Y'],
 })
-
-# DFS o busqueda profunda
-        
-# Llamamos a a funcion que creamos dando inicio en el nodo "A"
+# Llamamos a a funcion que creamos dando inicio en el nodo "S"
 
 res = Grafo( diccionarioAdjacencia=bfs_amplitud(grafo, 'S'))
 print("Representación | Grafo del arbol resultante :\n")
