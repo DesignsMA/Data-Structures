@@ -1,9 +1,6 @@
 #Recorrido por amplitud
-import networkx as nx
-G = nx.Graph()
 from Estructuras import Cola
 from Grafo import Grafo
-from pprint import pp
 
 def bfs_amplitud(grafo: Grafo, inicio):
     espera = set()  # seguimiento de nodos procesados (aqui se irá viendo el orden del camino)
