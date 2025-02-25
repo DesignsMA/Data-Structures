@@ -1,13 +1,4 @@
 from Grafo import Grafo
-# Definimos el grafo mediante un diccionario de phyton
-grafo = Grafo( diccionarioAdjacencia= {
-    'A': ['B', 'C'],
-    'B': ['D', 'E'],
-    'C': [],
-    'D': ['F'],
-    'E': [],
-    'F': [],
-})
 
 # DFS o busqueda profunda
 def dfs_profundidad(grafo, inicio):
@@ -23,14 +14,39 @@ def dfs_profundidad(grafo, inicio):
             print(nodo)        # Imrpime el nodo actual (para visualizar)
             pila.extend(reversed(grafo.vertices[nodo]))  # Añade nodos hijos a la pila en orden reverso 
     print(l)        
-            
-            
-           
 
+print("Defina los vertices del grafo\n")
+vertices = []
+while True:
+    vertice = input("\nIntroduce un vertice\n-1 para salir : ")
+    
+    if vertice == "-1":
+        print("\nSaliendo...")
+        break
+    
+    if not vertice.isalnum():
+        print("El vertice debe ser al menos un caracter o digito.")
+        continue
+    
+    if vertice not in vertices: # si el  vertice  no esta repetido
+        vertices.append(vertice)
+    else:
+        print(f"El vertice '{vertice}' ya existe.")
 
+grafo = Grafo( vertices )
+grafo.definirAdjacencia()
 
+inicio = None
+print(f"Grafo :\n{grafo}")
+while True:
+    inicio = input("\nIntroduce el vertice de inicio: ")
+    
+    if inicio not in vertices:
+        print(f"El vertice '{inicio}' no existe en el grafo.")
+    else:
+        break
 
 # Llamamos a a funcion que creamos dando inicio en el nodo "A"
-dfs_profundidad(grafo, 'A')
+dfs_profundidad(grafo, inicio)
 
 

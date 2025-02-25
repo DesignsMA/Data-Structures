@@ -15,7 +15,7 @@ class Grafo():
             
         self.matrizAdjacencia = np.zeros((self.n, self.n), int)  # Crear matriz de nxn de ceros
         
-        if matrizAdjacencia.all() != None and diccionarioAdjacencia == None: # si se inicializa con la matriz de adjacencia, y no un diccionario
+        if matrizAdjacencia.all() != 0 and diccionarioAdjacencia == None: # si se inicializa con la matriz de adjacencia, y no un diccionario
             if matrizAdjacencia.shape != (self.n, self.n): #caso por defecto o error
                 print("La matriz deberia ser de nxn donde n es el numero de vertices.\nLa matriz esta vacia.")
             else:

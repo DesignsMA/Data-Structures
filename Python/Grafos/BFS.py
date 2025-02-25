@@ -22,22 +22,40 @@ def bfs_amplitud(grafo: Grafo, inicio):
                 
     return recorridoAmplitud
 
+print("Defina los vertices del grafo\n")
+vertices = []
+while True:
+    vertice = input("\nIntroduce un vertice\n-1 para salir : ")
+    
+    if vertice == "-1":
+        print("\nSaliendo...")
+        break
+    
+    if not vertice.isalnum():
+        print("El vertice debe ser al menos un caracter o digito.")
+        continue
+    
+    if vertice not in vertices: # si el  vertice  no esta repetido
+        vertices.append(vertice)
+    else:
+        print(f"El vertice '{vertice}' ya existe.")
 
-# Definimos el grafo mediante un diccionario de phyton
+grafo = Grafo( vertices )
+grafo.definirAdjacencia()
 
-grafo = Grafo( diccionarioAdjacencia= {
-    'V': ['R'],
-    'R': ['S', 'V'],
-    'S': ['R', 'W'],
-    'W': ['T', 'X', 'S'],
-    'T': ['W', 'X', 'U'],
-    'X': ['T', 'Y', 'U', 'W'],
-    'Y': ['X', 'U'],
-    'U': ['T', 'X', 'Y'],
-})
-# Llamamos a a funcion que creamos dando inicio en el nodo "S"
+inicio = None
+print(f"Grafo :\n{grafo}")
+while True:
+    inicio = input("\nIntroduce el vertice de inicio: ")
+    
+    if inicio not in vertices:
+        print(f"El vertice '{inicio}' no existe en el grafo.")
+    else:
+        break
+    
+res = Grafo( diccionarioAdjacencia=bfs_amplitud(grafo, inicio) )
 
-res = Grafo( diccionarioAdjacencia=bfs_amplitud(grafo, 'S'))
+
 print("Representación | Grafo del arbol resultante :\n")
 print(res)
 
