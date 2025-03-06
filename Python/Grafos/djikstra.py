@@ -68,20 +68,21 @@ plt.show(block=False)#mostramos el grafo
 input("...")
 
 
-#ingrese el incio y el destino
-inicio=input("ingrese el nodo inicio: ")
-destino=input("ingrese el nodo final: ")
+while True:
+    #ingrese el incio y el destino
+    inicio=input("Ingrese el nodo inicio: ")
+    destino=input("Ingrese el nodo final: ")
 
 
-#calculamos el camino ma corto con el método nx.shortest_path()
-try:
-    camino_mas_corto=nx.shortest_path(g,inicio,destino,weight="weight")#algoritmo djiskstra inlcuido en la biblioteca networkx
-    print(f"\n Camino mas corto es: {camino_mas_corto}")
-except nx.NetworkXNoPath:
-        print("no existe camino entre esos dos nodos")    
-except nx.NodeNotFound:
-    print(f"nodo no encontrado")
-    
+    #calculamos el camino ma corto con el método nx.shortest_path()
+    try:
+        camino_mas_corto=nx.shortest_path(g,inicio,destino,weight="weight")#algoritmo djiskstra inlcuido en la biblioteca networkx
+        print(f"\n Camino mas corto es: {camino_mas_corto}")
+    except nx.NetworkXNoPath:
+            print("no existe camino entre esos dos nodos")    
+    except nx.NodeNotFound:
+        print(f"nodo no encontrado")
+
     
             
     
