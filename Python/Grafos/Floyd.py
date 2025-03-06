@@ -99,9 +99,9 @@ for k in range(n): # nodo intermedio
                 A[i,j] = A[i,k] + A[k,j] # actualizar el costo actual
                 
                 if temp != A[i,j]: # si hubo un cambio
-                    print("\n\nCosto Anterior: ", temp)
+                    print("\nCosto Anterior: ", temp)
                     print(f"{nodos[i]}->{nodos[j]}: min({temp}, {nodos[i]}->{nodos[k]}+{nodos[k]}->{nodos[j]})={A[i,j]}")
 
-print("Matriz de adyacencia final (A):\n", A)
+print("Matriz de caminos final (A):\n", A)
 
 input("Terminar programa...")
