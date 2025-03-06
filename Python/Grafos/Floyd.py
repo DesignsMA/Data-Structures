@@ -100,8 +100,8 @@ for k in range(n): # nodo intermedio
                 
                 if temp != A[i,j]: # si hubo un cambio
                     print("\nCosto Anterior: ", temp)
-                    print(f"{nodos[i]}->{nodos[j]}: min({temp}, {nodos[i]}->{nodos[k]}+{nodos[k]}->{nodos[j]})={A[i,j]}")
+                    print(f"{nodos[i]} -> {nodos[j]}: min( {temp}, {nodos[i]}->{nodos[k]}+{nodos[k]}->{nodos[j]} ) ={A[i,j]}")
 
-print("Matriz de caminos final (A):\n", A)
+print("\nMatriz de costos final (A):\n", A)
 
 input("Terminar programa...")
