@@ -2,7 +2,7 @@ import networkx as nx
 import matplotlib.pyplot as plt # usado para graficar los nodos
 import numpy as np
 G = nx.Graph() # instanciando grafo no dirigido
-print("Defina los vertices del grafo\n")
+print("Defina los vertices del grafo no dirigido\n")
 while True:
     vertice = input("\nIntroduce un vertice\n-1 para salir : ")
     
