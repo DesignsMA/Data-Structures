@@ -8,10 +8,11 @@ G.add_nodes_from([(4, {"color": "red"}), (5, {"color": "green"})]) # con atribut
 # vertices
 G.add_edge(1,2)
 G.add_edge(1,2) #e pueden colocar repetidos
-subax1 = plt.subplot(111)
+subax1 = plt.subplot(121)
 G.add_edge(1,6) #se pueden colocar inexistentes
 e = (2, 3)
 G.add_edge(*e)  # desempacar tupla
+
 
 print(G.nodes)
 print(G.edges)
@@ -20,5 +21,8 @@ print(G.adj[1]) # adjacentes del nodo 1 en el grafo
 tuplas = [(n, nbrdict) for n, nbrdict in G.adjacency()]
 print(tuplas) # lista de adjacencia
 
+H = nx.DiGraph(G) #digrafo
 nx.draw(G, with_labels=True, font_weight='bold')
+subax2 = plt.subplot(122) #subplot, (ncols, nrows, index)
+nx.draw(H, with_labels=True, font_weight='bold')
 plt.show()
