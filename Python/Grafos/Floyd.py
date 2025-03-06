@@ -1,5 +1,6 @@
 import networkx as nx
 import matplotlib.pyplot as plt # usado para graficar los nodos
+import numpy as np
 G = nx.Graph() # instanciando grafo no dirigido
 print("Defina los vertices del grafo\n")
 while True:
@@ -67,6 +68,14 @@ nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#ff535
 print("Visualize su grafo a continuación: ")
 
 plt.show(block=True)
+n = G.number_of_nodes()
 
+# Algoritmo de floyd-warshall
+C = nx.adjacency_matrix(G,weight="weight") # obtener matriz de costos
+C = C.toarray() # convertir a arreglo de numpy
+print(C)
+#for i in range(1,n):
+#    for j in range(1,n):
+        
 
 
