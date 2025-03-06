@@ -72,12 +72,23 @@ n = G.number_of_nodes()
 
 # Algoritmo de floyd-warshall
 print("Número de nodos:", G.number_of_nodes())
-C = nx.adjacency_matrix(G,weight="weight") # obtener matriz de costos
-C = C.toarray() # convertir a arreglo de numpy
+
+# Crear matriz de adyacencia inicializada con infinitos
+C = np.full((n, n), np.inf)
+
+# Establecer la diagonal principal en 0
+np.fill_diagonal(C, 0)
+
+# Llenar la matriz con los pesos de las aristas
+nodos = list(G.nodes)  # Lista de nodos para mapear índices
+for i, u in enumerate(nodos):
+    for j, v in enumerate(nodos):
+        if G.has_edge(u, v):  # Si hay una arista entre u y v
+            C[i, j] = G[u][v]['weight']  # Asignar el peso de la arista
+
+print("Matriz de adyacencia inicial (C):")
 print(C)
-A = np.copy(C) # copia C en A
-for i in range(n): # i.e 2 nodos -> [0,1]
-    A[i,i] = 0 # distancia de nodo a sí mismo
+A = np.copy(C)
 
 nodos = list(G.nodes)
 for k in range(n): # nodo intermedio
@@ -91,6 +102,6 @@ for k in range(n): # nodo intermedio
                     print("\n\nCosto Anterior: ", temp)
                     print(f"{nodos[i]}->{nodos[j]}: min({temp}, {nodos[i]}->{nodos[k]}+{nodos[k]}->{nodos[j]})={A[i,j]}")
 
-print(A)
+print("Matriz de adyacencia final (A):\n", A)
 
 input("Terminar programa...")
