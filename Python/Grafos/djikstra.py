@@ -22,9 +22,9 @@ while True:
 
 for vertice in g.nodes:
     print(f"\nDefiniendo adyacencias para el vértice: '{vertice}'")
-    print("Vértices disponibles:", g.nodes)
+    print("\nVértices disponibles:", g.nodes)
     while True:
-        adj = input(f"Ingresa un vértice adyacente a '{vertice}' (-1 para terminar): ").strip()  # Eliminar espacios en blanc
+        adj = input(f"\nIngresa un vértice adyacente a '{vertice}' (-1 para terminar): ").strip()  # Eliminar espacios en blanc
         if adj == "-1":
             break  # Salir del bucle para este vértice
         
@@ -33,7 +33,7 @@ for vertice in g.nodes:
                 
                 while True:
                     try:
-                        costo = input(f"Define el costo del recorrido hacia {adj} | Solo positivos: ")
+                        costo = input(f"\nDefine el costo del recorrido hacia {adj} | Solo positivos: ")
                         costo = float(costo)
                         if costo < 0:
                             print("Solo se puede tener un costo mayor a cero.")
@@ -46,7 +46,7 @@ for vertice in g.nodes:
                 
                 arista = (vertice,adj,costo)
                 g.add_edge(vertice,adj, weight=costo)
-                print(f"'{adj}' agregado como adyacente a '{vertice}' con un costo de {costo}.")
+                print(f"'\n{adj}' agregado como adyacente a '{vertice}' con un costo de {costo}.")
 
             else:
                 print(f"'{adj}' ya está en la lista de adyacencia de '{vertice}'.")
