@@ -67,15 +67,30 @@ nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#ff535
 
 print("Visualize su grafo a continuación: ")
 
-plt.show(block=True)
+plt.show(block=False)
 n = G.number_of_nodes()
 
 # Algoritmo de floyd-warshall
+print("Número de nodos:", G.number_of_nodes())
 C = nx.adjacency_matrix(G,weight="weight") # obtener matriz de costos
 C = C.toarray() # convertir a arreglo de numpy
 print(C)
-#for i in range(1,n):
-#    for j in range(1,n):
-        
+A = np.copy(C) # copia C en A
+for i in range(n): # i.e 2 nodos -> [0,1]
+    A[i,i] = 0 # distancia de nodo a sí mismo
 
+nodos = list(G.nodes)
+for k in range(n): # nodo intermedio
+    for i in range(n): # nodo origen
+        for j in range(n): # nodo destino
+            if A[i,k] + A[k,j] < A[i,j]: # pasar por k reduce
+                temp = A[i,j]
+                A[i,j] = A[i,k] + A[k,j] # actualizar el costo actual
+                
+                if temp != A[i,j]: # si hubo un cambio
+                    print("\n\nCosto Anterior: ", temp)
+                    print(f"{nodos[i]}->{nodos[j]}: min({temp}, {nodos[i]}->{nodos[k]}+{nodos[k]}->{nodos[j]})={A[i,j]}")
 
+print(A)
+
+input("Terminar programa...")
