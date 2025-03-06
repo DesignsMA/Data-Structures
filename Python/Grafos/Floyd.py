@@ -63,4 +63,10 @@ nx.draw_networkx_labels(G, pos,font_size=10, font_family="Montserrat", font_colo
 # etiquetas con peso de aristas
 edge_labels = nx.get_edge_attributes(G, "weight") # retorna diccionario de atributos
 nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#ff5353',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
-plt.show()
+
+print("Visualize su grafo a continuación: ")
+
+plt.show(block=True)
+
+
+
