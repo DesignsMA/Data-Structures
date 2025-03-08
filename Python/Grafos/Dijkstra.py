@@ -2,6 +2,52 @@ import networkx as nx
 import matplotlib.pyplot as plt # usado para graficar los nodos
 import numpy as np
 G = nx.DiGraph() # instanciando grafo DIRIGIDO
+
+def dijkstra(G, origen):
+    # Número de nodos
+    n = G.number_of_nodes()
+    
+    # Lista de nodos para mapear índices
+    V = list(G.nodes)
+    
+    # Matriz de costos
+    C = nx.attr_matrix(G, edge_attr="weight", rc_order=V, dtype=float)
+    
+    # Inicialización de S, D y P
+    S = [origen]  # S inicia con el origen
+    D = {}  # Diccionario de distancias
+    P = {}  # Diccionario de predecesores
+    
+    # Inicializando distancias
+    for i in range(n):
+        if i == V.index(origen):  # El nodo de origen tiene distancia 0
+            D[V[i]] = 0
+        else:
+            if (origen, V[i]) in G.edges:  # Si hay conexión
+                D[V[i]] = C[V.index(origen), i]
+            else:  # Si no hay conexión
+                D[V[i]] = np.inf
+    
+    for i in range(n-1):
+        # Elige un vértice w en V-S tal que D[w] es mínimo
+        # para todos los vertices 'v' en V si solo si v no esta en S
+        # key = lambda v: D[v] especifica una funcion de comparación
+        # en este caso sera en función de la distancia
+        w = min((v for v in V if v not in S), key=lambda v: D[v])
+        
+        # Agrega w a S
+        S.append(w)
+        
+        for v in V:
+            
+            if v not in S and C[V.index(w), V.index(v)] != np.inf:
+
+                if D[w] + C[V.index(w), V.index(v)] < D[v]:
+                    P[v] = w # añadir predecesor si pasando por w, mejora camino
+                    D[v] = D[w] + C[V.index(w), V.index(v)]
+        print(D)
+        print(P)
+            
 print("Defina los vertices del grafo DIRIGIDO\n")
 while True:
     vertice = input("\nIntroduce un vertice\n-1 para salir : ")
@@ -15,7 +61,7 @@ while True:
         continue
     
     if vertice not in G.nodes: # si el  vertice  no esta repetido
-        G.add_node(vertice) # añadir nodo
+        G.add_node(str(vertice)) # añadir nodo
     else:
         print(f"El vertice '{vertice}' ya existe.")
 
@@ -68,40 +114,18 @@ nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#ff535
 print("Visualize su grafo a continuación: ")
 
 plt.show(block=False)
-n = G.number_of_nodes()
-
-# Algoritmo de floyd-warshall
-print("Número de nodos:", n)
-
-# Crear matriz de adyacencia inicializada con infinitos
-C = np.full((n, n), np.inf)
-
-# Establecer la diagonal principal en 0
-np.fill_diagonal(C, 0)
-
-# Llenar la matriz con los pesos de las aristas
-nodos = list(G.nodes)  # Lista de nodos para mapear índices
-for i, u in enumerate(nodos):
-    for j, v in enumerate(nodos):
-        if G.has_edge(u, v):  # Si hay una arista entre u y v
-            C[i, j] = G[u][v]['weight']  # Asignar el peso de la arista
-
-print("Matriz de adyacencia inicial (C):")
-print(C)
-A = np.copy(C)
-
-nodos = list(G.nodes)
-for k in range(n): # nodo intermedio
-    for i in range(n): # nodo origen
-        for j in range(n): # nodo destino
-            if A[i,k] + A[k,j] < A[i,j]: # pasar por k reduce
-                temp = A[i,j]
-                A[i,j] = A[i,k] + A[k,j] # actualizar el costo actual
-                
-                if temp != A[i,j]: # si hubo un cambio
-                    print("\nCosto Anterior: ", temp)
-                    print(f"{nodos[i]} -> {nodos[j]}: min( {temp}, {nodos[i]}->{nodos[k]}+{nodos[k]}->{nodos[j]} ) ={A[i,j]}")
-
-print("\nMatriz de costos final (A):\n", A)
+while True:
+    print("\nNodos disponibles: ", list(G.nodes))
+    origen = input("\nIntroduzca su nodo origen, escriba 'Salir' para salir: ")
+    if origen == 'Salir':
+        break
+    
+    try:
+        G.nodes[origen]
+        dijkstra(G, origen)
+    except KeyError as e:
+        print("El nodo no existe.")
+    except EOFError:
+        print("Error, fin de archivo.")
 
 input("Terminar programa...")
