@@ -3,51 +3,52 @@ import matplotlib.pyplot as plt # usado para graficar los nodos
 import numpy as np
 G = nx.DiGraph() # instanciando grafo DIRIGIDO
 
-def dijkstra(G, origen):
+def dijkstra(G: nx.DiGraph, origen):
     # Número de nodos
-    n = G.number_of_nodes()
-    
-    # Lista de nodos para mapear índices
-    V = list(G.nodes)
-    
-    # Matriz de costos
-    C = nx.attr_matrix(G, edge_attr="weight", rc_order=V, dtype=float)
-    
-    # Inicialización de S, D y P
-    S = [origen]  # S inicia con el origen
-    D = {}  # Diccionario de distancias
-    P = {}  # Diccionario de predecesores
-    
-    # Inicializando distancias
-    for i in range(n):
-        if i == V.index(origen):  # El nodo de origen tiene distancia 0
-            D[V[i]] = 0
-        else:
-            if (origen, V[i]) in G.edges:  # Si hay conexión
-                D[V[i]] = C[V.index(origen), i]
-            else:  # Si no hay conexión
-                D[V[i]] = np.inf
-    
-    for i in range(n-1):
-        # Elige un vértice w en V-S tal que D[w] es mínimo
-        # para todos los vertices 'v' en V si solo si v no esta en S
-        # key = lambda v: D[v] especifica una funcion de comparación
-        # en este caso sera en función de la distancia
-        w = min((v for v in V if v not in S), key=lambda v: D[v])
-        
-        # Agrega w a S
-        S.append(w)
-        
-        for v in V:
-            
-            if v not in S and C[V.index(w), V.index(v)] != np.inf:
+        n = G.number_of_nodes()
 
-                if D[w] + C[V.index(w), V.index(v)] < D[v]:
-                    P[v] = w # añadir predecesor si pasando por w, mejora camino
-                    D[v] = D[w] + C[V.index(w), V.index(v)]
-        print(D)
-        print(P)
+        # Lista de nodos para mapear índices
+        V = list(G.nodes)
+
+        # Matriz de costos
+        C = np.full((n,n), np.inf)
+        for a,b in G.edges: # por cada par de vertices que definen a un arista
+            C            
             
+        print("Matriz de costos:\n", C)
+
+        # Inicialización de S, D y P
+        S = set([origen])  # S inicia con el origen (usando un conjunto)
+        D = {}  # Diccionario de distancias
+        P = {}  # Diccionario de predecesores
+
+        # Inicializando distancias
+        for i in range(n):
+            if V[i] == origen:  # El nodo de origen tiene distancia 0
+                D[V[i]] = 0
+            else:
+                if (origen, V[i]) in G.edges:  # Si hay conexión
+                    D[V[i]] = C[V.index(origen), i]
+                else:  # Si no hay conexión
+                    D[V[i]] = np.inf
+
+        # Bucle principal
+        for _ in range(n-1):
+            # Elige un vértice w en V-S tal que D[w] es mínimo
+            w = min((v for v in V if v not in S), key=lambda v: D[v])
+
+            # Agrega w a S
+            S.add(w)
+
+            # Actualiza las distancias de los vecinos de w
+            for v in V:
+                if v not in S and C[V.index(w), V.index(v)] != np.inf:
+                    if D[w] + C[V.index(w), V.index(v)] < D[v]:
+                        P[v] = w  # Añadir predecesor si pasando por w, mejora camino
+                        D[v] = D[w] + C[V.index(w), V.index(v)]
+        return D, P        
+            
+                
 print("Defina los vertices del grafo DIRIGIDO\n")
 while True:
     vertice = input("\nIntroduce un vertice\n-1 para salir : ")
@@ -91,7 +92,7 @@ for vertice in G.nodes:
                 
                 arista = (vertice,adj,costo)
                 G.add_edge(vertice,adj, weight=costo)
-                print(f"'\n{adj}' agregado como adyacente a '{vertice}' con un costo de {costo}.")
+                print(f"\n'{adj}'agregado como adyacente a '{vertice}' con un costo de {costo}.")
 
             else:
                 print(f"'{adj}' ya está en la lista de adyacencia de '{vertice}'.")
@@ -122,7 +123,14 @@ while True:
     
     try:
         G.nodes[origen]
-        dijkstra(G, origen)
+        Distancias, Predecesores = dijkstra(G, origen)
+        print(f"\nDistancias mas cortas de {origen} a los demas nodos: ")
+        for nodo, distancia in Distancias.items():
+            print(f"{origen} -> {nodo}: {distancia}")
+        print(Predecesores)
+        #print(f"\nDistancias mas cortas de {origen} a los demas nodos: ")
+        #for nodo, distancia in Distancias.items():
+        #    print(f"{origen} -> {nodo}: {distancia}")
     except KeyError as e:
         print("El nodo no existe.")
     except EOFError:
