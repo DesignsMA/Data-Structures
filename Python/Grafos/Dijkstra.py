@@ -55,7 +55,7 @@ def dijkstra(G: nx.DiGraph, origen):
             
         return D, Predecesores
 
-def obtenerAristas(origen, predecesores: dict, Grafo: nx.DiGraph):
+def reconstruirCaminos(origen, predecesores: dict, Grafo: nx.DiGraph):
     aristas = []
     for nodo, predecesor in predecesores.items():
         camino = []
@@ -78,13 +78,23 @@ def obtenerAristas(origen, predecesores: dict, Grafo: nx.DiGraph):
         aristas.append(camino)
         
     return aristas
-            
-            
-            
+
+def redibujar(G: nx.DiGraph, pos, camino):
+    if len(camino) > 0:
+        nx.draw_networkx_nodes(G,pos, node_size=200, node_color='#ff5353')
+        # etiquetas de nodos
+        nx.draw_networkx_labels(G, pos,font_size=10, font_family="Montserrat", font_color='white', font_weight='bold')
+        edges_diff = set(G.edges) - set(camino)
+        edge_labels_diff = {edge: G[edge[0]][edge[1]]["weight"] for edge in camino if edge not in camino and edge in G.edges}
+        edge_labels = {edge: G[edge[0]][edge[1]]["weight"] for edge in camino if edge in G.edges}
+        # aristas no usados
+        nx.draw_networkx_edges(G,pos, edgelist=edges_diff,  width=2)
+        nx.draw_networkx_edge_labels(G,pos, edge_labels_diff, font_size=10, font_color='#ff5353',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
+        # aristas de caminos más cortos
+        nx.draw_networkx_edges(G, pos, edgelist=camino, edge_color='#ff5353', width=2)
+        nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#040404',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
         
-        
             
-                
 print("Defina los vertices del grafo DIRIGIDO\n")
 while True:
     vertice = input("\nIntroduce un vertice\n-1 para salir : ")
@@ -135,16 +145,17 @@ for vertice in G.nodes:
         else:
             print(f"Error: '{adj}' no es un vértice válido.")
 
-fig = plt.figure(figsize=(12, 8))  # Ajusta el tamaño de la figura a toda la ventana
+fig = plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la figura a toda la ventana
 fig.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Elimina los márgenes
 pos = nx.spring_layout(G, seed=728, k=3/np.sqrt(G.number_of_nodes())) # posicion de los nodos
 # nodos
 nx.draw_networkx_nodes(G,pos, node_size=200, node_color='#ff5353')
+# etiquetas de nodos
+nx.draw_networkx_labels(G, pos,font_size=10, font_family="Montserrat", font_color='white', font_weight='bold')
+
 # aristas
 nx.draw_networkx_edges(G,pos, width=2)
 
-# etiquetas de nodos
-nx.draw_networkx_labels(G, pos,font_size=10, font_family="Montserrat", font_color='white', font_weight='bold')
 # etiquetas con peso de aristas
 edge_labels = nx.get_edge_attributes(G, "weight") # retorna diccionario de atributos
 nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#ff5353',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
@@ -158,30 +169,39 @@ while True:
     if origen == 'Salir':
         break
     
+    destino = input("\nIntroduzca su nodo destino, escriba 'todo' para resaltar todos los caminos: ")
+    
+    
     try:
-        G.nodes[origen]
+        G.nodes[origen] # comprobar existencia
+        if destino != 'todo':
+            G.nodes[destino]
+            
         Distancias, Predecesores = dijkstra(G, origen)
+        
         print(f"\nDistancias mas cortas de {origen} a los demas nodos: ")
         for nodo, distancia in Distancias.items():
             print(f"{origen} -> {nodo}: {distancia}")
-            
-        print(Predecesores)
-        
-        caminos = obtenerAristas(origen, Predecesores, G)
-        print(f"\nCaminos más cortos de {origen} a los demas nodos: ")
+                    
+        caminos = reconstruirCaminos(origen, Predecesores, G)
+        print(f"\nCaminos mas cortos de {origen} a los demas nodos: ")
         for i in range( G.number_of_nodes() ): # para n nodos
             print(f"{origen} -> {list(G.nodes)[i]}: {caminos[i]}")
         
-        print("\nVisualize los caminos más cortos: ")
-        for camino in caminos:
+        print("\nVisualize los caminos más cortos\nMueva la figura para actualizar la vista.")
+        
+        fig.clear() # redibujar
+        if destino == 'todo':
+            todo = []
+            for camino in caminos:
+                todo += camino # todos los caminos
             
-            if len(camino) > 0:
-                edge_labels = {edge: G[edge[0]][edge[1]]["weight"] for edge in camino if edge in G.edges}
-                nx.draw_networkx_edges(G, pos, edgelist=camino, edge_color='#ff5353', width=2)
-                nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#040404',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
+            redibujar(G,pos,todo)
+        else:
+            redibujar(G,pos,caminos[list(G.nodes).index(destino)]) # solo redibujar el camino destino
 
     except KeyError as e:
-        print(f"El nodo no existe.\n")
+        print(f"El nodo de destino u origen no existe.\n")
     except EOFError:
         print("Error, fin de archivo.")
 
