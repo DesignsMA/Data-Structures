@@ -52,8 +52,9 @@ for vertice in G.nodes:
         else:
             print(f"Error: '{adj}' no es un vértice válido.")
 
-ax = plt.subplot(111)
-pos = nx.spring_layout(G, seed=7)  # posicion de los nodos
+fig = plt.figure(figsize=(12, 8))  # Ajusta el tamaño de la figura a toda la ventana
+fig.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Elimina los márgenes
+pos = nx.spring_layout(G, seed=728, k=3/np.sqrt(G.number_of_nodes())) # posicion de los nodos
 # nodos
 nx.draw_networkx_nodes(G,pos, node_size=200, node_color='#ff5353')
 # aristas
@@ -74,17 +75,12 @@ n = G.number_of_nodes()
 print("Número de nodos:", n)
 
 # Crear matriz de adyacencia inicializada con infinitos
-C = np.full((n, n), np.inf)
-
+nodos = list(G.nodes)  # Lista de nodos para mapear índices
+C = np.full((n,n), np.inf)
+for a,b in G.edges: # por cada par de vertices que definen a un arista
+    C[nodos.index(a), nodos.index(b)] = G.adj[a][b]['weight'] # en la posición correspondiente a la matriz, asignar el peso de ir de a a b           
 # Establecer la diagonal principal en 0
 np.fill_diagonal(C, 0)
-
-# Llenar la matriz con los pesos de las aristas
-nodos = list(G.nodes)  # Lista de nodos para mapear índices
-for i, u in enumerate(nodos):
-    for j, v in enumerate(nodos):
-        if G.has_edge(u, v):  # Si hay una arista entre u y v
-            C[i, j] = G[u][v]['weight']  # Asignar el peso de la arista
 
 print("Matriz de adyacencia inicial (C):")
 print(C)

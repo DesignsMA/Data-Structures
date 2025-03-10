@@ -1,4 +1,5 @@
 import networkx as nx
+import numpy as np
 import matplotlib.pyplot as plt # usado para graficar los nodos
 G = nx.DiGraph(name="Grafo") # instancia de grafo no dirigido
 G.add_nodes_from(['2',3]) # añade lista de nodos
@@ -15,7 +16,12 @@ print(G.edges)
 for a,b in G.edges:
     print(a,b)
 print(G.number_of_nodes(), G.number_of_edges())
-print(G.adj[1]['2']['weight']) # adjacentes del nodo 1 en el grafo
+n = G.number_of_nodes()
+C = np.full((n,n), np.inf)
+V = list(G.nodes)
+for a,b in G.edges: # por cada par de vertices que definen a un arista
+    C[V.index(a), V.index(b)] = G.adj[a][b]['weight'] # en la posición correspondiente a la matriz, asignar el peso de ir de a a b           
+print(C)
 tuplas = [(n, nbrdict) for n, nbrdict in G.adjacency()]
 print(tuplas) # lista de adjacencia
 print(nx.attr_matrix(G, edge_attr="weight", rc_order=G.nodes))
