@@ -89,7 +89,8 @@ pos = nx.spring_layout(G, seed=728, k=3/np.sqrt(n)) # posicion de los nodos
 
 print("Visualize su grafo a continuación: ")
 
-
+redibujar(G,pos,[]) # dibujo inicial
+plt.show(block=False)
 
 # Crear matriz de adyacencia inicializada con infinitos
 nodos = list(G.nodes)  # Lista de nodos para mapear índices
@@ -116,8 +117,6 @@ for k in range(n): # nodo intermedio
                     print("\nCosto Anterior: ", temp)
                     print(f"{nodos[i]} -> {nodos[j]}: min( {temp}, {nodos[i]}->{nodos[k]}+{nodos[k]}->{nodos[j]} ) ={C[i,j]}")
 
-redibujar(G,pos,[]) # dibujo inicial
-plt.show(block=False)
 
 while True:
     print("\nNodos disponibles: ", list(G.nodes))
