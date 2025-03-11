@@ -80,19 +80,18 @@ def reconstruirCaminos(origen, predecesores: dict, Grafo: nx.DiGraph):
     return aristas
 
 def redibujar(G: nx.DiGraph, pos, camino):
-    if len(camino) > 0:
-        nx.draw_networkx_nodes(G,pos, node_size=200, node_color='#ff5353')
-        # etiquetas de nodos
-        nx.draw_networkx_labels(G, pos,font_size=10, font_family="Montserrat", font_color='white', font_weight='bold')
-        edges_diff = set(G.edges) - set(camino)
-        edge_labels_diff = {edge: G[edge[0]][edge[1]]["weight"] for edge in camino if edge not in camino and edge in G.edges}
-        edge_labels = {edge: G[edge[0]][edge[1]]["weight"] for edge in camino if edge in G.edges}
-        # aristas no usados
-        nx.draw_networkx_edges(G,pos, edgelist=edges_diff,  width=2)
-        nx.draw_networkx_edge_labels(G,pos, edge_labels_diff, font_size=10, font_color='#ff5353',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
-        # aristas de caminos más cortos
-        nx.draw_networkx_edges(G, pos, edgelist=camino, edge_color='#ff5353', width=2)
-        nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#040404',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
+    nx.draw_networkx_nodes(G,pos, node_size=200, node_color='#ff5353')
+    # etiquetas de nodos
+    nx.draw_networkx_labels(G, pos,font_size=10, font_family="Montserrat", font_color='white', font_weight='bold')
+    edges_diff = set(G.edges) - set(camino)
+    edge_labels_diff = {edge: G[edge[0]][edge[1]]["weight"] for edge in edges_diff}  # Aristas NO usadas
+    edge_labels = {edge: G[edge[0]][edge[1]]["weight"] for edge in camino if edge in G.edges}
+    # aristas no usados
+    nx.draw_networkx_edges(G,pos, edgelist=edges_diff,  width=2)
+    nx.draw_networkx_edge_labels(G,pos, edge_labels_diff, font_size=10, font_color='#ff5353',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
+    # aristas de caminos más cortos
+    nx.draw_networkx_edges(G, pos, edgelist=camino, edge_color='#ff5353', width=2)
+    nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#040404',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
         
             
 print("Defina los vertices del grafo DIRIGIDO\n")
@@ -148,18 +147,7 @@ for vertice in G.nodes:
 fig = plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la figura a toda la ventana
 fig.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Elimina los márgenes
 pos = nx.spring_layout(G, seed=728, k=3/np.sqrt(G.number_of_nodes())) # posicion de los nodos
-# nodos
-nx.draw_networkx_nodes(G,pos, node_size=200, node_color='#ff5353')
-# etiquetas de nodos
-nx.draw_networkx_labels(G, pos,font_size=10, font_family="Montserrat", font_color='white', font_weight='bold')
-
-# aristas
-nx.draw_networkx_edges(G,pos, width=2)
-
-# etiquetas con peso de aristas
-edge_labels = nx.get_edge_attributes(G, "weight") # retorna diccionario de atributos
-nx.draw_networkx_edge_labels(G,pos, edge_labels,font_size=10, font_color='#ff5353',font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec":(1.0, 1.0, 1.0),"fc":(1.0, 1.0, 1.0), "alpha": 0.6}) # por cada arista colocar etiqueta
-
+redibujar(G,pos,[]) # dibujo inicial
 print("Visualize su grafo a continuación: ")
 
 plt.show(block=False)
@@ -204,5 +192,3 @@ while True:
         print(f"El nodo de destino u origen no existe.\n")
     except EOFError:
         print("Error, fin de archivo.")
-
-input("Terminar programa...")
