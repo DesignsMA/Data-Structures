@@ -83,7 +83,7 @@ for vertice in G.nodes:
             print(f"Error: '{adj}' no es un vértice válido.")
 
 n = G.number_of_nodes()
-fig = plt.figure(figsize=(12, 8))  # Ajusta el tamaño de la figura a toda la ventana
+fig = plt.figure(figsize=(6, 6))  # Ajusta el tamaño de la figura a toda la ventana
 fig.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Elimina los márgenes
 pos = nx.spring_layout(G, seed=728, k=3/np.sqrt(n)) # posicion de los nodos
 
@@ -117,7 +117,7 @@ for k in range(n): # nodo intermedio
                     print("\nCosto Anterior: ", temp)
                     print(f"{nodos[i]} -> {nodos[j]}: min( {temp}, {nodos[i]}->{nodos[k]}+{nodos[k]}->{nodos[j]} ) ={C[i,j]}")
 
-
+print(f"Matriz de costos los caminos mas cortos a todos los vertices\n: {C}")
 while True:
     print("\nNodos disponibles: ", list(G.nodes))
     origen = input("\nIntroduzca su nodo origen, escriba 'Salir' para salir: ")

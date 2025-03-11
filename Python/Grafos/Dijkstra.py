@@ -144,7 +144,7 @@ for vertice in G.nodes:
         else:
             print(f"Error: '{adj}' no es un vértice válido.")
 
-fig = plt.figure(figsize=(12, 6))  # Ajusta el tamaño de la figura a toda la ventana
+fig = plt.figure(figsize=(6, 6))  # Ajusta el tamaño de la figura a toda la ventana
 fig.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Elimina los márgenes
 pos = nx.spring_layout(G, seed=728, k=3/np.sqrt(G.number_of_nodes())) # posicion de los nodos
 redibujar(G,pos,[]) # dibujo inicial
@@ -152,6 +152,7 @@ print("Visualize su grafo a continuación: ")
 
 plt.show(block=False)
 while True:
+    
     print("\nNodos disponibles: ", list(G.nodes))
     origen = input("\nIntroduzca su nodo origen, escriba 'Salir' para salir: ")
     if origen == 'Salir':
