@@ -150,7 +150,6 @@ while True:
             todo = []
             for cam in caminos:
                 todo += cam
-            print(todo)
             redibujar(G,pos,todo)
         else:
             redibujar(G,pos,caminos[nodos.index(destino)]) # solo redibujar el camino destino
