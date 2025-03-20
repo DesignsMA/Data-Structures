@@ -7,6 +7,10 @@ G.add_nodes_from([(4, {"color": "red"}), (5, {"color": "green"})]) # con atribut
 
 # vertices
 G.add_edge(1,'2', weight=9)
+G.add_edge(1,4, weight=1)
+G.add_edge(1,4, weight=3)
+G.add_edge(1,4, weight=5)
+G.add_edge(5,1, weight=4)
 e = ('2', 3)
 G.add_edge(*e,weight=9)  # desempacar tupla
 
@@ -16,6 +20,7 @@ print(G.edges)
 for a,b in G.edges:
     print(a,b)
 print(G.number_of_nodes(), G.number_of_edges())
+print(sorted( G.edges(data=True), key=lambda x: x[2]['weight']))
 n = G.number_of_nodes()
 C = np.full((n,n), np.inf)
 V = list(G.nodes)
