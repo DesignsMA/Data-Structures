@@ -4,6 +4,7 @@ from tkinter import simpledialog, messagebox
 import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import time as time
 
 class GrafoInteractivo:
     """
@@ -33,7 +34,6 @@ class GrafoInteractivo:
         ttk.Button(self.menu_frame, text="Agregar/Actualizar Arista", bootstyle=DANGER, command=self.agregar_arista).pack(fill=ttk.X, pady=5)
         ttk.Button(self.menu_frame, text="Generar árbol de expansión mínima | Kruskal", bootstyle=INFO, command=self.kruskal).pack(fill=ttk.X, pady=5)
         ttk.Button(self.menu_frame, text="Generar árbol de expansión mínima | Prim", bootstyle=INFO, command=self.prim_mst).pack(fill=ttk.X, pady=5)
-
         ttk.Button(self.menu_frame, text="Reiniciar vista", bootstyle=SUCCESS, command=self.reset).pack(fill=ttk.X, pady=5)
         ttk.Button(self.menu_frame, text="Salir", bootstyle=INFO, command=root.quit).pack(fill=ttk.X, pady=20)
 
@@ -138,8 +138,8 @@ class GrafoInteractivo:
     def kruskal(self):
         if self.isModifiable:
             G = self.G
-            if not G.is_directed() and nx.is_connected(G): # si el grafo es conexo y no dirigido
-                V = set( G.nodes ) # conjunto de vertices
+            if not G.is_directed() and nx.is_connected(G):  # Si el grafo es conexo y no dirigido
+                V = set(G.nodes)  # Conjunto de vértices
                 # Estructura para manejar las componentes conexas (Union-Find)
                 C = {}  # Diccionario para almacenar el padre de cada vértice
 
@@ -160,75 +160,108 @@ class GrafoInteractivo:
                     if root_u != root_v:
                         C[root_v] = root_u  # Une las componentes
 
-                comp_sig = 0
+                # Inicializar componentes para cada vértice
                 for v in V:
-                    comp_sig +=1
-                    INICIAL(v) # cada vertice es componente de si mismo
+                    INICIAL(v)
 
-                # Lista ordenada de la lista de tuplas (a,b,{weight: int}) usando como campo de comparacion su campo x[2]['weight'] 
-                A = sorted( G.edges(data=True), key=lambda x: x[2]['weight'])
-                MST = nx.Graph() # instancia del grafo del árbol
-
-                for a in A: # va de menor peso a mayor
-                    u,v,weight = a
-                    # determina a que componente pertenece cada vértice
-                    if ENCUENTRA(u) != ENCUENTRA(v):  # Si no forman un ciclo
-                        MST.add_edge(u, v, **weight)  # Añadir la arista al MST
-                        COMBINA(u, v)  # Combinar las componentes
-
+                # Lista ordenada de las aristas por peso
+                A = sorted(G.edges(data=True), key=lambda x: x[2]['weight'])
+                MST = nx.Graph()  # Grafo resultante para el árbol
+                start = list(self.G.nodes)[0]
                 self.temp = [self.G, self.pos]
                 self.G = MST
-                self.pos = self.generar_posiciones_arbol(self.G, list(self.G.nodes)[0])
                 self.isModifiable = False
-                self.resaltado = list(self.G.edges)
-                self.dibujar_grafo()
-                
+                messagebox.showinfo("Proceso comenzado", "En dorado vera la arista actual, en rojo aquellas que son descartadas.")
+                def agregar_arista_a_MST():
+                    if len(A) > 0:
+                        u, v, weight = A.pop(0)  # Obtener la arista con el menor peso
+                        print(f"({u},{v},{weight})")
+                        self.resaltado = [(u,v)]  # Resaltar las aristas del MST
+                        if ENCUENTRA(u) != ENCUENTRA(v):  # Si no forman un ciclo
+                            MST.add_edge(u, v, **weight)  # Añadir la arista al MST
+                            COMBINA(u, v)  # Combinar las componentes
+
+                            # Actualizar visualización
+                            self.pos = self.generar_posiciones_arbol(self.G, start)
+                            self.dibujar_grafo()  # Dibujar el grafo actualizado
+                            self.root.after(2000, agregar_arista_a_MST)
+                        else:
+                            self.dibujar_grafo('red')  # Dibujar el grafo actualizado
+                                # Llamar a la función de nuevo después de 1 segundo
+                            self.root.after(2000, agregar_arista_a_MST)
+                    else:
+                        # Cuando todas las aristas han sido procesadas
+                        messagebox.showinfo("Proceso completado", "El árbol de expansión mínima ha sido encontrado.")
+                        self.resaltado = list(self.G.edges)
+                        self.dibujar_grafo()
+
+                # Iniciar el proceso de construcción del MST
+                if len(A) > 0 :
+                    agregar_arista_a_MST()
+
             else:
                 messagebox.showerror(message="El grafo debe ser no dirigido y conexo.")
         else:
             messagebox.showerror(message="Actualmente solo esta visualizando el árbol generado.")
 
+
     def prim_mst(self):
         if self.isModifiable:
             start = simpledialog.askstring("Introduzca lo pedido", "Ingrese el nodo de inicio:", parent=self.root)
             self.root.update()  # Actualizar la ventana
-
+    
             G = self.G
             if start not in G.nodes:
                 messagebox.showerror(message="El nodo de inicio no existe en el grafo.")
                 return
-
+    
             U = {start}  # Conjunto de nodos en el MST
             Tree = nx.Graph()  # Grafo resultante para el árbol de expansión mínima
-
-            while len(U) < len(G.nodes):
-                aristas_candidatas = []
-
-                for nodo in U:
-                    for vecino, atributos in G[nodo].items():
-                        if vecino not in U:
-                            if "weight" not in atributos:
-                                raise ValueError(f"La arista {nodo}-{vecino} no tiene peso.")
-                            aristas_candidatas.append((nodo, vecino, atributos["weight"]))
-
-                if not aristas_candidatas:
-                   messagebox.showerror(message="El grafo no es conexo, no se puede formar un árbol de expansión mínima.")
-
-                # Seleccionar la arista de menor peso
-                nodo1, nodo2, peso = min(aristas_candidatas, key=lambda x: x[2])
-
-                # Agregar la arista al árbol de expansión mínima
-                Tree.add_edge(nodo1, nodo2, weight=peso)
-                U.add(nodo2)
-
+            aristas_candidatas = []
             self.temp = [self.G, self.pos]
             self.G = Tree
-            self.pos = self.generar_posiciones_arbol(self.G, start)
             self.isModifiable = False
-            self.resaltado = list(self.G.edges)
-            self.dibujar_grafo()
+            def actualizar_arista():
+                if len(U) < len(G.nodes):
+                    # Limpiar las aristas candidatas de la iteración anterior
+                    aristas_candidatas.clear()
+    
+                    # Recopilar todas las aristas candidatas de los nodos en U
+                    for nodo in U:
+                        for vecino, atributos in G[nodo].items():
+                            if vecino not in U:
+                                if "weight" not in atributos:
+                                    raise ValueError(f"La arista {nodo}-{vecino} no tiene peso.")
+                                aristas_candidatas.append((nodo, vecino, atributos["weight"]))
+    
+                    if not aristas_candidatas:
+                        messagebox.showerror(message="El grafo no es conexo, no se puede formar un árbol de expansión mínima.")
+                        return
+    
+                    # Seleccionar la arista de menor peso
+                    nodo1, nodo2, peso = min(aristas_candidatas, key=lambda x: x[2])
+    
+                    # Agregar la arista al árbol de expansión mínima
+                    Tree.add_edge(nodo1, nodo2, weight=peso)
+                    self.pos = self.generar_posiciones_arbol(self.G, start)
+                    self.resaltado = [(nodo1, nodo2)]  # Para resaltar la arista en la interfaz
+                    self.dibujar_grafo()  # Actualizar el dibujo del grafo
+    
+                    U.add(nodo2)  # Agregar el nodo al conjunto U
+    
+                    # Llamar de nuevo después de 1 segundo para la siguiente iteración
+                    self.root.after(2000, actualizar_arista)
+                else:
+                    messagebox.showinfo("Proceso completado", "El árbol de expansión mínima ha sido encontrado.")
+                    self.resaltado = list(Tree.edges)
+                    self.dibujar_grafo()
+    
+            # Iniciar el proceso de encontrar el MST
+            actualizar_arista()
+            
         else:
             messagebox.showerror(message="Actualmente solo esta visualizando el árbol generado.")
+            
     
     def reset(self):
         """
@@ -241,7 +274,7 @@ class GrafoInteractivo:
             self.temp = []
         self.dibujar_grafo()
 
-    def dibujar_grafo(self):
+    def dibujar_grafo(self, optColor:str="#ffc600"):
         """
         Dibuja el grafo en la interfaz gráfica, resaltando los caminos más cortos si existen.
         """
@@ -253,7 +286,7 @@ class GrafoInteractivo:
         edge_labels = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in self.resaltado if edge in self.G.edges}
         nx.draw_networkx_edges(self.G, self.pos, edgelist=edges_diff, width=2)
         nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels_diff, font_size=10, font_color='#ff5353', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
-        nx.draw_networkx_edges(self.G, self.pos, edgelist=self.resaltado, edge_color='#ff5353', width=2)
+        nx.draw_networkx_edges(self.G, self.pos, edgelist=self.resaltado, edge_color=optColor, width=3)
         nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels, font_size=10, font_color='#040404', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
 
         self.canvas.draw()
