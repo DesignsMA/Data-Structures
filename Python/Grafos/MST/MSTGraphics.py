@@ -317,9 +317,7 @@ class GrafoInteractivo:
             self.pos[self.dragging] = (event.xdata, event.ydata)
             self.dibujar_grafo()
             
-
-# Crear ventana con ttkbootstrap (nuevo enfoque)
-root = ttk.Window(themename="darkly")  # Cambia "darkly" por el tema que prefieras
+root = ttk.Window(themename="darkly") 
 
 app = GrafoInteractivo(root)
 root.mainloop()
