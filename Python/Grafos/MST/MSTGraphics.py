@@ -7,11 +7,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import time as time
 
 class GrafoInteractivo:
-    """
-    Clase que representa una interfaz gráfica interactiva para manipular y visualizar grafos.
-    Permite agregar vértices, aristas, calcular caminos más cortos usando Dijkstra y Floyd-Warshall,
-    y visualizar los resultados en un gráfico.
-    """
+
 
     def __init__(self, root: ttk.Window):
         """
@@ -276,7 +272,7 @@ class GrafoInteractivo:
 
     def dibujar_grafo(self, optColor:str="#ffc600"):
         """
-        Dibuja el grafo en la interfaz gráfica, resaltando los caminos más cortos si existen.
+        Dibuja el grafo en la interfaz gráfica, resaltando aristas si se proveen.
         """
         self.ax.clear()
         nx.draw_networkx_nodes(self.G, self.pos, node_size=200, node_color='#ff5353')
