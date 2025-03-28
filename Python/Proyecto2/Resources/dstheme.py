@@ -3,7 +3,7 @@ USER_THEMES = {
     "dstheme": {
         "type": "dark",
         "colors": {
-            "primary": "#00ff99",
+            "primary": "#009977",
             "secondary": "#0b9ff0",
             "success": "#0fff6f",
             "info": "#3498db",
