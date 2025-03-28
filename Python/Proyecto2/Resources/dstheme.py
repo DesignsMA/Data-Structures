@@ -22,8 +22,3 @@ USER_THEMES = {
         }
     }
 }
-
-Style().configure(
-    ".",
-    font=("Montserrat", 12)  # Fuente para todos los widgets
-)

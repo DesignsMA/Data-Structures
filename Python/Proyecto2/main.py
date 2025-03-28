@@ -17,7 +17,13 @@ class GuardianesBosque:
 
         :param root: Ventana principal de la aplicación.
         """
+        font = "Montserrat"
         self.root = root
+        self.root.style.configure('.', font=(font, 10))
+        self.root.option_add('*TCombobox*Listbox.font', (font, 10))
+        self.root.option_add('*TCombobox.font', (font, 10))
+        self.root.option_add('*TEntry.font', (font, 10))
+        self.root.option_add('*TSpinbox.font', (font, 10))
         self.root.attributes('-topmost', True)  # Mantener en primer plano
         self.root.focus_force()  # Forzar el foco en la ventana
 
