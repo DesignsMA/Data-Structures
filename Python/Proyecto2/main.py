@@ -5,20 +5,19 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
-
+from Resources import dstheme
 # Ruta base (ej: "C:/grafo/")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-class GrafoInteractivo:
+class GuardianesBosque:
 
 
     def __init__(self, root: ttk.Window):
         """
-        Inicializa la interfaz gráfica y configura el grafo interactivo.
+        Inicializa la interfaz gráfica.
 
         :param root: Ventana principal de la aplicación.
         """
         self.root = root
-        self.root.title("ALGORITMOS | MST")
         self.root.attributes('-topmost', True)  # Mantener en primer plano
         self.root.focus_force()  # Forzar el foco en la ventana
 
@@ -27,11 +26,11 @@ class GrafoInteractivo:
         self.menu_frame.pack(side=ttk.LEFT, fill=ttk.Y, padx=10, pady=10)
 
         # Botones del menú
-        ttk.Button(self.menu_frame, text="Cargar archivo de zonas", bootstyle=DANGER, command=self.cargarGrafo).pack(fill=ttk.X, pady=5)
-        ttk.Button(self.menu_frame, text="Agregar Zona de bosques", bootstyle=DANGER, command=self.agregar_vertice).pack(fill=ttk.X, pady=5)
-        ttk.Button(self.menu_frame, text="Agregar/Actualizar ruta a una zona", bootstyle=DANGER, command=self.agregar_arista).pack(fill=ttk.X, pady=5)
-        ttk.Button(self.menu_frame, text="Reiniciar vista", bootstyle=SUCCESS, command=self.reset).pack(fill=ttk.X, pady=5)
-        ttk.Button(self.menu_frame, text="Salir", bootstyle=INFO, command=root.quit).pack(fill=ttk.X, pady=20)
+        ttk.Button(self.menu_frame, text="Cargar archivo de zonas", bootstyle=PRIMARY, command=self.cargarGrafo).pack(fill=ttk.X, pady=5)
+        ttk.Button(self.menu_frame, text="Agregar Zona de bosques", bootstyle=PRIMARY, command=self.agregar_vertice).pack(fill=ttk.X, pady=5)
+        ttk.Button(self.menu_frame, text="Agregar/Actualizar ruta a una zona", bootstyle=PRIMARY, command=self.agregar_arista).pack(fill=ttk.X, pady=5)
+        ttk.Button(self.menu_frame, text="Reiniciar vista", bootstyle=DANGER, command=self.reset).pack(fill=ttk.X, pady=5)
+        ttk.Button(self.menu_frame, text="Salir", bootstyle=SECONDARY, command=root.quit).pack(fill=ttk.X, pady=20)
         # Crear la figura y el lienzo de Matplotlib
         self.fig, self.ax = plt.subplots(figsize=(7, 7))
         self.fig.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Elimina los márgenes
@@ -195,13 +194,13 @@ class GrafoInteractivo:
         Dibuja el grafo en la interfaz gráfica, resaltando aristas si se proveen.
         """
         self.ax.clear()
-        nx.draw_networkx_nodes(self.G, self.pos, node_size=200, node_color='#ff5353')
+        nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#00ff99')
         nx.draw_networkx_labels(self.G, self.pos, font_size=10, font_family="Montserrat", font_color='white', font_weight='bold')
         edges_diff = set(self.G.edges) - set(self.resaltado)
         edge_labels_diff = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in edges_diff}
         edge_labels = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in self.resaltado if edge in self.G.edges}
-        nx.draw_networkx_edges(self.G, self.pos, edgelist=edges_diff, width=2)
-        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels_diff, font_size=10, font_color='#ff5353', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
+        nx.draw_networkx_edges(self.G, self.pos, edgelist=edges_diff, width=3)
+        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels_diff, font_size=10, font_color='#00ff99', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
         nx.draw_networkx_edges(self.G, self.pos, edgelist=self.resaltado, edge_color=optColor, width=3)
         nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels, font_size=10, font_color='#040404', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
 
@@ -237,7 +236,9 @@ class GrafoInteractivo:
             self.pos[self.dragging] = (event.xdata, event.ydata)
             self.dibujar_grafo()
             
-root = ttk.Window(themename="darkly") 
+root = ttk.Window(themename="dstheme") 
 
-app = GrafoInteractivo(root)
+app = GuardianesBosque(root)
+root.title("Guardianes del Bosque")
+
 root.mainloop()
