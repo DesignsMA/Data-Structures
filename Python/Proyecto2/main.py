@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
 from math import sqrt
+import random
 from Resources import dstheme
+dstheme.__main__()
 # Ruta base (ej: "C:/grafo/")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 class GuardianesBosque:
@@ -56,7 +58,7 @@ class GuardianesBosque:
             ("Cargar archivo de zonas", PRIMARY, self.cargarGrafo),
             ("Agregar Zona de bosques", PRIMARY, self.agregar_vertice),
             ("Agregar/Actualizar ruta a una zona", PRIMARY, self.agregar_arista),
-            ("Reiniciar vista", DANGER, self.reset),
+            ("Reiniciar vista", DANGER, self.asignar_zonas_contaminadas),
             ("Salir", SECONDARY, self.root.quit)
         ]
         
@@ -154,7 +156,7 @@ class GuardianesBosque:
                                     G.add_edge(nodos[i], nodos[j], weight=peso)
 
                     self.G = G # cargar grafo
-                    self.pos = nx.spring_layout(self.G, scale=1.4, k=2/sqrt(G.number_of_nodes()))
+                    self.pos = nx.spring_layout(self.G, scale=1.6, k=3/sqrt(G.number_of_nodes()))
                     self.dibujar_grafo()
 
             except FileNotFoundError:
@@ -164,6 +166,22 @@ class GuardianesBosque:
             except Exception as e:
                 messagebox.showerror(message=f"Error inesperado: {e}")
             return None
+    
+    def asignar_zonas_contaminadas(self):
+        if self.isModifiable and self.G.number_of_nodes() > 2:
+            grafo = self.G
+            vertices = list(grafo.nodes)
+
+            num_zonas_contaminadas = random.randint(1, len(vertices)-1)
+
+            zonas_contaminadas = set()
+
+            while len(zonas_contaminadas) < num_zonas_contaminadas:
+                zona = random.choice(vertices)
+                if zona not in zonas_contaminadas:
+                    zonas_contaminadas.add(zona)
+
+            self.contaminadas = zonas_contaminadas
 
     def agregar_vertice(self):
         """
@@ -244,14 +262,15 @@ class GuardianesBosque:
         """
         self.ax.clear()
         nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#00ff99')
-        nx.draw_networkx_labels(self.G, self.pos, font_size=10, font_family="Montserrat", font_color='white', font_weight='bold')
+        nx.draw_networkx_labels(self.G, self.pos, font_size=10, font_family="Montserrat", font_color='#164435', font_weight='bold')
         edges_diff = set(self.G.edges) - set(self.resaltado)
         edge_labels_diff = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in edges_diff}
         edge_labels = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in self.resaltado if edge in self.G.edges}
+        print(edge_labels_diff)
         nx.draw_networkx_edges(self.G, self.pos, edgelist=edges_diff, width=3)
-        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels_diff, font_size=10, font_color='#00ff99', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
+        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels_diff, font_size=10, font_color='#040404', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
         nx.draw_networkx_edges(self.G, self.pos, edgelist=self.resaltado, edge_color=optColor, width=3)
-        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels, font_size=10, font_color='#040404', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
+        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels, font_size=10, font_color=optColor, font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.8})
 
         self.canvas.draw()
 

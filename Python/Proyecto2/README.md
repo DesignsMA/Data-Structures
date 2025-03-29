@@ -19,6 +19,18 @@ Programa de capacitación que aplica algoritmos de grafos para la conservación 
 | **Dijkstra**      | Ruta más corta desde un punto inicial (ej: base → zona contaminada).                        |
 | **Floyd-Warshall**| Rutas más cortas entre **todas** las zonas (útil para múltiples centros de reciclaje).      |
 
+
+### 3.Diseño de Redes Ecológicas (Prim y Kruskal)
+Propósito:
+Construir un sistema eficiente de estaciones de reciclaje con la menor cantidad de recursos. Las estaciones
+de reciclaje serán ubicadas dentro de las zonas identificadas.
+Métodos:
+Prim: Es útil si las conexiones entre zonas son numerosas, es decir se tiene un bosque denso. Si el número
+de zonas E es cercano al número máximo posible de caminos (V(V−1) /2, el bosque es denso.
+Kruskal: Se usa si las zonas están muy dispersas y hay pocos caminos. Si el número de caminos E es
+cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1), el bosque es disperso.
+Temas para utilizar
+
 ---
 
 ### 🛠️ Requisitos Técnicos  
