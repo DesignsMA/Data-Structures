@@ -22,9 +22,13 @@ class GuardianesBosque:
         self.root = root
         self._configurar_fuentes()
         self._configurar_ventana()
+        self.main_frame = ttk.Frame(self.root)
+        self.main_frame.pack(fill='both', expand=True) # crando frame inicial
+        self._crear_ventana_bienvenida()
         self._crear_menu_frame()  # Separamos la creación del menú
-        self._crear_area_grafico()
+        self._crear_area_grafico() # Se añade el gráfico al menu frame
         self._inicializar_grafo()
+        self.menu_frame.grid_remove()
         
     def _configurar_fuentes(self):
         """Configura las fuentes globales"""
@@ -39,49 +43,68 @@ class GuardianesBosque:
         """Configura propiedades de la ventana"""
         self.root.attributes('-topmost', True)
         self.root.focus_force()
+    
+    def _crear_ventana_bienvenida(self):
+        self.bienvenida_frame = ttk.Frame(self.main_frame, width=1200)
+        self.bienvenida_frame.grid(row=0,column=0)
+        label1 = ttk.Label(self.bienvenida_frame, text="BIENVENIDO A GUARDIANES DEL BOSQUE", font=("Montserrat Bold",35),foreground="#0fff6f", justify="center").grid(row=0,column=0, pady=30)
+        intro_text = """🌿 Descubre como proteger nuestros ecosistemas con algoritmos 🌿 
+
+En esta capacitación, aprenderás a:
+• Explorar zonas contaminadas
+• Optimizar rutas de recolección de residuos
+• Diseñar redes de reciclaje
+
+Al completar las actividades, recibirás un
+Certificado Digital como 'Guardián del Bosque'"""
+
+        intro_label = ttk.Label(
+            master=self.bienvenida_frame,
+            text=intro_text,
+            font=("Montserrat Light", 18),
+            justify="center",
+        ).grid(row=1,column=0)
+
+        btn = ttk.Button(self.bienvenida_frame, text="Estoy Listo!", style=DANGER, command=self.continuar, width=40).grid(row=2,column=0, pady=30)
+
+    def continuar(self):
+        self.toggle_mostrar_ocultar(self.bienvenida_frame)
+        self.toggle_mostrar_ocultar(self.menu_frame)
         
     def _crear_menu_frame(self):
         """Crea y organiza el frame del menú usando grid"""
-        # Frame principal para menú y gráfico
-        self.main_frame = ttk.Frame(self.root)
-        self.main_frame.pack(fill='both', expand=True)
-        
-        # Frame del menú (izquierda)
         self.menu_frame = ttk.Frame(self.main_frame, width=200)
-        self.menu_frame.grid(row=0, column=0, sticky='nswe', padx=10, pady=10)
+        # Frame de botones
+        self.button_frame = ttk.Frame(self.menu_frame)
+        self.menu_frame.grid(row=1, column=0, sticky='nswe')
         
-        # Configurar grid para botones
-        self.menu_frame.grid_columnconfigure(0, weight=1)
-        
+        self.button_frame.grid(row=0, column=0, sticky='ew') # colocar botones en fila 0
         # Botones del menú (organizados en grid)
+        
         botones = [
             ("Cargar archivo de zonas", PRIMARY, self.cargarGrafo),
             ("Agregar Zona de bosques", PRIMARY, self.agregar_vertice),
             ("Agregar/Actualizar ruta a una zona", PRIMARY, self.agregar_arista),
-            ("Reiniciar vista", DANGER, self.asignar_zonas_contaminadas),
             ("Salir", SECONDARY, self.root.quit)
         ]
         
         for i, (texto, estilo, comando) in enumerate(botones):
             ttk.Button(
-                self.menu_frame,
+                self.button_frame,
                 text=texto,
                 bootstyle=estilo,
                 command=comando
             ).grid(row=i, column=0, sticky='ew', pady=5)
+
     
     def _crear_area_grafico(self):
-        """Crea el área del gráfico a la derecha"""
+        """Crea el área del gráfico a la derecha en menu_frame"""
         # Frame para el gráfico (derecha)
-        self.graph_frame = ttk.Frame(self.main_frame)
-        self.graph_frame.grid(row=0, column=1, sticky='nswe', padx=10, pady=10)
-        
-        # Configurar peso de columnas
-        self.main_frame.grid_columnconfigure(1, weight=1)
-        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.graph_frame = ttk.Frame(self.menu_frame) 
+        self.graph_frame.grid(row=0, column=1, sticky='nswe', padx=10) # colocar grafo en columna 1
         
         # Crear figura de Matplotlib
-        self.fig, self.ax = plt.subplots(figsize=(7, 7))
+        self.fig, self.ax = plt.subplots(figsize=(10, 7))
         self.fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
         
         # Canvas para el gráfico
@@ -93,18 +116,15 @@ class GuardianesBosque:
         self.canvas.mpl_connect("button_release_event", self.on_release)
         self.canvas.mpl_connect("motion_notify_event", self.on_motion)
     
-    def ocultar_elementos_menu(self):
-        """Oculta todos los widgets dentro de menu_frame"""
-        for widget in self.menu_frame.winfo_children():
-            widget.grid_remove()
-            widget.grid_
-            # widget.pack_forget() 
-    
-    def mostrar_elementos_menu(self):
-        """Reubica todos los widgets en sus posiciones originales"""
-        for i, widget in enumerate(self.menu_frame.winfo_children()):
-            widget.grid(row=i, column=0, sticky='nswe', pady=5)  # Ajusta parámetros según tu layout
-            # widget.pack(fill='x', pady=5) 
+    def toggle_mostrar_ocultar(self, target: ttk.Frame):
+        """
+        Muestra u oculta un ttk.Frame (target) con una disposición de grid pero sin olvidar las posiciones.
+        """
+        print(target)
+        if target.winfo_viewable():
+            target.grid_remove()
+        else:
+            target.grid()
     
     def _inicializar_grafo(self):
         """Inicializa el grafo y variables de estado"""
@@ -205,6 +225,8 @@ class GuardianesBosque:
                 self.G.add_node(nombre)
                 self.pos[nombre] = (len(self.G.nodes), len(self.G.nodes))  # Posición inicial
                 self.dibujar_grafo()
+            elif nombre in self.G.nodes:
+                messagebox.showerror(message="Ya existe esa zona.")
         else:
             messagebox.showerror(message="Actualmente solo esta visualizando el árbol generado.")
 
