@@ -5,57 +5,100 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
+from math import sqrt
 from Resources import dstheme
 # Ruta base (ej: "C:/grafo/")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 class GuardianesBosque:
 
-
     def __init__(self, root: ttk.Window):
         """
         Inicializa la interfaz gráfica.
-
+        
         :param root: Ventana principal de la aplicación.
         """
-        font = "Montserrat"
         self.root = root
+        self._configurar_fuentes()
+        self._configurar_ventana()
+        self._crear_menu_frame()  # Separamos la creación del menú
+        self._crear_area_grafico()
+        self._inicializar_grafo()
+        
+    def _configurar_fuentes(self):
+        """Configura las fuentes globales"""
+        font = "Montserrat Bold"
         self.root.style.configure('.', font=(font, 10))
         self.root.option_add('*TCombobox*Listbox.font', (font, 10))
         self.root.option_add('*TCombobox.font', (font, 10))
         self.root.option_add('*TEntry.font', (font, 10))
         self.root.option_add('*TSpinbox.font', (font, 10))
-        self.root.attributes('-topmost', True)  # Mantener en primer plano
-        self.root.focus_force()  # Forzar el foco en la ventana
-
-        # Crear el contenedor para el menú
-        self.menu_frame = ttk.Frame(self.root)
-        self.menu_frame.pack(side=ttk.LEFT, fill=ttk.Y, padx=10, pady=10)
-
-        # Botones del menú
-        ttk.Button(self.menu_frame, text="Cargar archivo de zonas", bootstyle=PRIMARY, command=self.cargarGrafo).pack(fill=ttk.X, pady=5)
-        ttk.Button(self.menu_frame, text="Agregar Zona de bosques", bootstyle=PRIMARY, command=self.agregar_vertice).pack(fill=ttk.X, pady=5)
-        ttk.Button(self.menu_frame, text="Agregar/Actualizar ruta a una zona", bootstyle=PRIMARY, command=self.agregar_arista).pack(fill=ttk.X, pady=5)
-        ttk.Button(self.menu_frame, text="Reiniciar vista", bootstyle=DANGER, command=self.reset).pack(fill=ttk.X, pady=5)
-        ttk.Button(self.menu_frame, text="Salir", bootstyle=SECONDARY, command=root.quit).pack(fill=ttk.X, pady=20)
-        # Crear la figura y el lienzo de Matplotlib
+    
+    def _configurar_ventana(self):
+        """Configura propiedades de la ventana"""
+        self.root.attributes('-topmost', True)
+        self.root.focus_force()
+        
+    def _crear_menu_frame(self):
+        """Crea y organiza el frame del menú usando grid"""
+        # Frame principal para menú y gráfico
+        self.main_frame = ttk.Frame(self.root)
+        self.main_frame.pack(fill='both', expand=True)
+        
+        # Frame del menú (izquierda)
+        self.menu_frame = ttk.Frame(self.main_frame, width=200)
+        self.menu_frame.grid(row=0, column=0, sticky='nswe', padx=10, pady=10)
+        
+        # Configurar grid para botones
+        self.menu_frame.grid_columnconfigure(0, weight=1)
+        
+        # Botones del menú (organizados en grid)
+        botones = [
+            ("Cargar archivo de zonas", PRIMARY, self.cargarGrafo),
+            ("Agregar Zona de bosques", PRIMARY, self.agregar_vertice),
+            ("Agregar/Actualizar ruta a una zona", PRIMARY, self.agregar_arista),
+            ("Reiniciar vista", DANGER, self.reset),
+            ("Salir", SECONDARY, self.root.quit)
+        ]
+        
+        for i, (texto, estilo, comando) in enumerate(botones):
+            ttk.Button(
+                self.menu_frame,
+                text=texto,
+                bootstyle=estilo,
+                command=comando
+            ).grid(row=i, column=0, sticky='ew', pady=5)
+    
+    def _crear_area_grafico(self):
+        """Crea el área del gráfico a la derecha"""
+        # Frame para el gráfico (derecha)
+        self.graph_frame = ttk.Frame(self.main_frame)
+        self.graph_frame.grid(row=0, column=1, sticky='nswe', padx=10, pady=10)
+        
+        # Configurar peso de columnas
+        self.main_frame.grid_columnconfigure(1, weight=1)
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        
+        # Crear figura de Matplotlib
         self.fig, self.ax = plt.subplots(figsize=(7, 7))
-        self.fig.subplots_adjust(left=0, right=1, top=1, bottom=0)  # Elimina los márgenes
-
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
-        self.canvas.get_tk_widget().pack(side=ttk.RIGHT, fill=ttk.BOTH, expand=True)
-
-        # Inicializar el grafo
-        self.G = nx.Graph()
-        self.pos = {}  # Posiciones de los nodos
-        self.resaltado = []
-        self.isModifiable = True
-        self.temp = []
-
-        # Habilitar movimiento de nodos
-        self.dragging = None
+        self.fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+        
+        # Canvas para el gráfico
+        self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
+        self.canvas.get_tk_widget().pack(fill='both', expand=True)
+        
+        # Eventos del mouse
         self.canvas.mpl_connect("button_press_event", self.on_press)
         self.canvas.mpl_connect("button_release_event", self.on_release)
         self.canvas.mpl_connect("motion_notify_event", self.on_motion)
+    
+    def _inicializar_grafo(self):
+        """Inicializa el grafo y variables de estado"""
+        self.G = nx.Graph()
+        self.pos = {}
+        self.resaltado = []
+        self.contaminadas = []
+        self.isModifiable = True
+        self.dragging = None
 
     def cargarGrafo(self):
         ruta = simpledialog.askstring(
@@ -111,7 +154,7 @@ class GuardianesBosque:
                                     G.add_edge(nodos[i], nodos[j], weight=peso)
 
                     self.G = G # cargar grafo
-                    self.pos = nx.bfs_layers(self.G,sources=list(self.G.nodes)[0])
+                    self.pos = nx.spring_layout(self.G, scale=1.4, k=2/sqrt(G.number_of_nodes()))
                     self.dibujar_grafo()
 
             except FileNotFoundError:
