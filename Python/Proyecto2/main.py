@@ -93,6 +93,19 @@ class GuardianesBosque:
         self.canvas.mpl_connect("button_release_event", self.on_release)
         self.canvas.mpl_connect("motion_notify_event", self.on_motion)
     
+    def ocultar_elementos_menu(self):
+        """Oculta todos los widgets dentro de menu_frame"""
+        for widget in self.menu_frame.winfo_children():
+            widget.grid_remove()
+            widget.grid_
+            # widget.pack_forget() 
+    
+    def mostrar_elementos_menu(self):
+        """Reubica todos los widgets en sus posiciones originales"""
+        for i, widget in enumerate(self.menu_frame.winfo_children()):
+            widget.grid(row=i, column=0, sticky='nswe', pady=5)  # Ajusta parámetros según tu layout
+            # widget.pack(fill='x', pady=5) 
+    
     def _inicializar_grafo(self):
         """Inicializa el grafo y variables de estado"""
         self.G = nx.Graph()
@@ -180,7 +193,6 @@ class GuardianesBosque:
                 zona = random.choice(vertices)
                 if zona not in zonas_contaminadas:
                     zonas_contaminadas.add(zona)
-
             self.contaminadas = zonas_contaminadas
 
     def agregar_vertice(self):
