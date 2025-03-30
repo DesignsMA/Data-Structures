@@ -49,11 +49,14 @@ class GuardianesBosque:
     def _inicializar_grafo(self):
         """Inicializa el grafo y variables de estado"""
         self.G = nx.Graph()
+        self.H = nx.Graph()
         self.pos = {}
+        self.secondary_pos = {}
         self.resaltado = []
         self.contaminadas = set()
         self.isModifiable = True
         self.dragging = None
+        self.secondary_dragging = None
         
     def load_image(self):
         try:
@@ -129,27 +132,64 @@ Certificado Digital como 'Guardián del Bosque'"""
             self.funcionesBtn.append(btn)  # Guardamos la referencia al botón
             
     def _crear_area_grafico(self):
-        """Crea el área del gráfico a la derecha en menu_frame"""
-        # Frame para el gráfico (derecha)
-        self.graph_frame = ttk.Frame(self.menu_frame) 
-        self.graph_frame.grid(row=0, column=1, sticky='nswe', padx=10) # colocar grafo en columna 1
-        
-        # Crear figura de Matplotlib
-        self.fig, self.ax = plt.subplots(facecolor='none')
-        self.ax.set_facecolor('none')
-        self.fig.tight_layout()  # Automaticamente ajusta el canvas
-        self.fig.set_size_inches(9, 6) #Tamaño inicial del canvas
-        self.fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
-        
-        # Canvas para el gráfico
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self.graph_frame)
-        self.canvas.get_tk_widget().pack(fill='both', expand=True)
-        
-        # Eventos del mouse
-        self.canvas.mpl_connect("button_press_event", self.on_press)
-        self.canvas.mpl_connect("button_release_event", self.on_release)
-        self.canvas.mpl_connect("motion_notify_event", self.on_motion)
-            
+        """Crea el área del gráfico con dos figuras (una visible, otra oculta)"""
+        # Frame contenedor principal
+        self.graph_frame = ttk.Frame(self.menu_frame)
+        self.graph_frame.grid(row=0, column=1, sticky='nsew', padx=3)
+
+        # Frame para figura principal (visible)
+        self.main_graph = ttk.Frame(self.graph_frame)
+        self.main_graph.grid(row=0, column=0, sticky='nsew')
+
+        # Frame para figura secundaria (oculta inicialmente)
+        self.secondary_graph = ttk.Frame(self.graph_frame)
+        self.secondary_graph.grid(row=0, column=1, sticky='nsew')
+        self.secondary_graph.grid_remove()
+
+        # Crear figura principal
+        self._configurar_figura(principal=True)
+
+        # Crear figura secundaria (oculta)
+        self._configurar_figura(principal=False)
+
+    def _configurar_figura(self, principal=True):
+        """Configura una figura matplotlib con parámetros comunes"""
+        frame = self.main_graph if principal else self.secondary_graph
+        fig, ax = plt.subplots(facecolor='none')
+        ax.set_facecolor('none')
+        ax.axis('off')
+        fig.tight_layout() # automaticamente ajustar figura
+        fig.set_size_inches(10 if principal else 4, 7) 
+
+        # Configuración del canvas
+        canvas = FigureCanvasTkAgg(fig, master=frame)
+        canvas.get_tk_widget().grid(row=0, column=0, sticky='nsew')
+
+        # Eventos del mouse solo para figura principal
+        if principal:
+                # Conectar eventos a figura principal
+                canvas.mpl_connect("button_press_event", 
+                                  lambda e: self.on_press(e, self.pos, 'dragging'))
+                canvas.mpl_connect("button_release_event", 
+                                  lambda e: self.on_release(e, 'dragging'))
+                canvas.mpl_connect("motion_notify_event", 
+                                  lambda e: self.on_motion(e, self.pos, 'dragging',
+                                                        self.G, ax, canvas,
+                                                        self.resaltado, self.contaminadas))
+                self.fig, self.ax, self.canvas = fig, ax, canvas
+                self.dragging = None  # Estado de arrastre para figura principal
+        else:
+                # Conectar eventos a figura secundaria
+                canvas.mpl_connect("button_press_event", 
+                                  lambda e: self.on_press(e, self.secondary_pos, 'secondary_dragging'))
+                canvas.mpl_connect("button_release_event", 
+                                  lambda e: self.on_release(e, 'secondary_dragging'))
+                canvas.mpl_connect("motion_notify_event", 
+                                  lambda e: self.on_motion(e, self.secondary_pos, 'secondary_dragging',
+                                                        self.H, ax, canvas,
+                                                        self.resaltado, self.contaminadas))
+                self.secondary_fig, self.secondary_ax, self.secondary_canvas = fig, ax, canvas
+                self.secondary_dragging = None  # Estado de arrastre para figura secundaria            
     def _definirActividades(self):
                 # Definición de actividades
         self.actividades = []
@@ -211,7 +251,7 @@ Kruskal: Se usa si las zonas están muy dispersas y hay pocos caminos. Si el nú
 cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1), el bosque es disperso.""",
 
             "botones": [
-                ("Prim", PRIMARY, None),
+                ("Prim", PRIMARY, self.prim),
                 ("Kruskal", PRIMARY, None),
                 ("Densidad del bosque", PRIMARY, None),
                 ("Volver", DANGER, lambda: self.mostrarActividad(2))
@@ -226,7 +266,7 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
             ttl = ttk.Label(
                 master=self.button_frame,
                 text=actividad["titulo"],
-                font=("Montserrat Bold", 14),
+                font=("Montserrat Bold", 13),
                 justify="center",
                 wraplength=400,
                 padding=2
@@ -236,10 +276,9 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
             lbl = ttk.Label(
                 master=self.button_frame,
                 text=actividad["texto"],
-                font=("Montserrat Light", 12),
+                font=("Montserrat Light", 11),
                 justify="left",
                 wraplength=400,
-                padding=2
             )
             lbl.grid(row=row_start+1, pady=30)
             widgets.append(lbl)
@@ -274,12 +313,25 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
         
         for widget in self.actividades[id]:
             self.toggle_mostrar_ocultar(widget)
+    
+    def prim(self):
+        # 1. Cambiar el tamaño de la figura
+        self.fig.set_size_inches(5, 7)  # Nuevo tamaño en pulgadas (ancho, alto)
+
+        # 3. Actualizar el canvas
+        self.canvas.draw()  # Esto fuerza el redibujado
+
+        # 4. Reconfigurar el widget en Tkinter 
+        self.canvas.get_tk_widget().config(width=int(5*self.fig.dpi), height=int(7*self.fig.dpi))
+        self.toggle_mostrar_ocultar(self.secondary_graph)
+        self.H = self.G
+        self.secondary_pos = self.generar_posiciones_arbol(self.H,'A')
+        self.dibujar_grafo(self.H,self.secondary_ax,self.secondary_canvas,self.secondary_pos,self.resaltado,self.contaminadas)
             
     def toggle_mostrar_ocultar(self, target: ttk.Frame):
         """
         Muestra u oculta un widget (target) con una disposición de grid pero sin olvidar las posiciones.
         """
-        print(target)
         if target.winfo_viewable():
             target.grid_remove()
         else:
@@ -346,8 +398,8 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
                 messagebox.showerror(message=f"Error: No se encontró el archivo en la ruta {ruta}")
             except ValueError as ve:
                 messagebox.showerror(message=f"Error en el formato del archivo: {ve}")
-            except Exception as e:
-                messagebox.showerror(message=f"Error inesperado: {e}")
+            #except Exception as e:
+            #    messagebox.showerror(message=f"Error inesperado: {e}")
             return None
     
     def asignar_zonas_contaminadas(self):
@@ -364,7 +416,7 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
                 if zona not in zonas_contaminadas:
                     zonas_contaminadas.add(zona)
             self.contaminadas = zonas_contaminadas
-        self.dibujar_grafo()
+        self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
 
     def agregar_vertice(self):
         """
@@ -398,7 +450,7 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
                     return
                 if peso >= 0:
                     self.G.add_edge(origen, destino, weight=peso)
-                    self.dibujar_grafo()
+                    self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
                 else:
                     messagebox.showerror("Error", "El peso debe ser válido (0-Inf).")
             else:
@@ -439,65 +491,55 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
             self.resaltado = []
             self.isModifiable = True
             self.temp = []
-        self.dibujar_grafo()
+            
+        self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
 
-    def dibujar_grafo(self, optColor:str="#ffc600", optColor2: str="#ff5353"):
+    def dibujar_grafo(self,G,ax,canvas,pos,resaltado,contaminadas, optColor:str="#ffc600", optColor2: str="#ff5353"):
         """
         Dibuja el grafo en la interfaz gráfica, resaltando aristas y nodos si se proveen.
         """
-        self.ax.clear()
-        if len(self.contaminadas) > 0: #reduciendo procesos
-            nodes_diff = set(self.G.nodes) - self.contaminadas
-            nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff) # no resaltados
-            nx.draw_networkx_nodes(self.G, self.pos, node_size=500, node_color=optColor2, nodelist=self.contaminadas) # resaltados
+        ax.clear()
+        if len(contaminadas) > 0: #reduciendo procesos
+            nodes_diff = set(G.nodes) - contaminadas
+            nx.draw_networkx_nodes(G, pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff, ax=ax) # no resaltados
+            nx.draw_networkx_nodes(G, pos, node_size=500, node_color=optColor2, nodelist=contaminadas,ax=ax) # resaltados
         else:
-            nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff) # no resaltados
-        nx.draw_networkx_labels(self.G, self.pos, font_size=10, font_family="Montserrat", font_color='#ffffff', font_weight='bold') #labels de nodo
+            nx.draw_networkx_nodes(G, pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff,ax=ax) # no resaltados
+        nx.draw_networkx_labels(G, pos, font_size=10, font_family="Montserrat", font_color='#ffffff', font_weight='bold',ax=ax) #labels de nodo
 
-        if len(self.resaltado) > 0:
-            edges_diff = set(self.G.edges) - set(self.resaltado)
-            edge_labels_diff = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in edges_diff}
-            edge_labels = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in self.resaltado if edge in self.G.edges}
-            nx.draw_networkx_edges(self.G, self.pos, edgelist=edges_diff, width=3, edge_color='#ffffff')
-            nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels_diff, font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
-            nx.draw_networkx_edges(self.G, self.pos, edgelist=self.resaltado, edge_color=optColor, width=3)
-            nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels, font_size=10, font_color=optColor, font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.8})
+        if len(resaltado) > 0:
+            edges_diff = set(G.edges) - set(resaltado)
+            edge_labels_diff = {edge: G[edge[0]][edge[1]]["weight"] for edge in edges_diff}
+            edge_labels = {edge: G[edge[0]][edge[1]]["weight"] for edge in resaltado if edge in G.edges}
+            nx.draw_networkx_edges(G, pos, edgelist=edges_diff, width=3, edge_color='#ffffff',ax=ax)
+            nx.draw_networkx_edge_labels(G, pos, edge_labels_diff, font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6},ax=ax)
+            nx.draw_networkx_edges(G, pos, edgelist=resaltado, edge_color=optColor, width=3)
+            nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=10, font_color=optColor, font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.8},ax=ax)
         else:
-            nx.draw_networkx_edges(self.G, self.pos, width=3, edge_color='#ffffff')
-            nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels={(u, v): d['weight'] for u, v, d in self.G.edges(data=True)} , font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
+            nx.draw_networkx_edges(G, pos, width=3, edge_color='#ffffff',ax=ax)
+            nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): d['weight'] for u, v, d in G.edges(data=True)} , font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6},ax=ax)
 
-        self.canvas.draw()
+        canvas.draw()
 
-    def on_press(self, event):
-        """
-        Maneja el evento de presionar el mouse para mover nodos.
-
-        :param event: Evento de presionar el mouse.
-        """
-        if event.xdata is not None and event.ydata is not None:
-            for node, (x, y) in self.pos.items():
-                if abs(event.xdata - x) < 0.1 and abs(event.ydata - y) < 0.1:
-                    self.dragging = node
+    def on_press(self, event, pos_ref, dragging_attr):
+        """Maneja el evento de presionar el mouse"""
+        if event.inaxes and event.xdata is not None and event.ydata is not None:
+            for node, (x, y) in pos_ref.items():
+                if ((event.xdata - x)**2 + (event.ydata - y)**2) < 0.01:
+                    setattr(self, dragging_attr, node)  # Usar setattr para manejar ambos dragging
                     break
-
-    def on_release(self, event):
-        """
-        Maneja el evento de soltar el mouse para dejar de mover nodos.
-
-        :param event: Evento de soltar el mouse.
-        """
-        self.dragging = None
-
-    def on_motion(self, event):
-        """
-        Maneja el evento de mover el mouse para arrastrar nodos.
-
-        :param event: Evento de mover el mouse.
-        """
-        if self.dragging and event.xdata is not None and event.ydata is not None:
-            self.pos[self.dragging] = (event.xdata, event.ydata)
-            self.dibujar_grafo()
-            
+                
+    def on_release(self, event, dragging_attr):
+        """Maneja el evento de soltar el mouse"""
+        setattr(self, dragging_attr, None)  # Resetear el estado de arrastre
+    
+    def on_motion(self, event, pos_ref, dragging_attr, G, ax, canvas, resaltado, contaminadas):
+        """Maneja el arrastre de nodos"""
+        dragging = getattr(self, dragging_attr)
+        if dragging and event.inaxes == ax and event.xdata is not None and event.ydata is not None:
+            pos_ref[dragging] = (event.xdata, event.ydata)
+            self.dibujar_grafo(G, ax, canvas, pos_ref, resaltado, contaminadas)
+                    
 root = ttk.Window(themename="dstheme") 
 
 app = GuardianesBosque(root)
