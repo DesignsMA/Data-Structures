@@ -29,6 +29,7 @@ class GuardianesBosque:
         self._crear_menu_frame()  # Separamos la creación del menú
         self._crear_area_grafico() # Se añade el gráfico al menu frame
         self._inicializar_grafo()
+        self._definirActividades()
         self.menu_frame.grid_remove()
         
     def _configurar_fuentes(self):
@@ -50,7 +51,7 @@ class GuardianesBosque:
         self.G = nx.Graph()
         self.pos = {}
         self.resaltado = []
-        self.contaminadas = []
+        self.contaminadas = set()
         self.isModifiable = True
         self.dragging = None
         
@@ -97,7 +98,7 @@ Certificado Digital como 'Guardián del Bosque'"""
         
     def _crear_menu_frame(self):
         """Crea y organiza el frame del menú usando grid"""
-        self.menu_frame = ttk.Frame(self.main_frame, width=200, padding=30)
+        self.menu_frame = ttk.Frame(self.main_frame, padding=30)
         # Frame de botones
         self.button_frame = ttk.Frame(self.menu_frame)
         self.menu_frame.grid(row=1, column=0, sticky='nswe')
@@ -109,7 +110,10 @@ Certificado Digital como 'Guardián del Bosque'"""
             ("Cargar archivo de zonas", PRIMARY, self.cargarGrafo),
             ("Agregar Zona de bosques", PRIMARY, self.agregar_vertice),
             ("Agregar/Actualizar ruta a una zona", PRIMARY, self.agregar_arista),
-            ("Exploración de zonas", PRIMARY, self.exploracionZonas),
+            ("Generar nuevas zonas contaminadas", PRIMARY, self.asignar_zonas_contaminadas),
+            ("Exploración de zonas", DANGER, lambda: self.mostrarActividad(0)),
+            ("Optimización de rutas de recolección", DANGER, lambda: self.mostrarActividad(1)),
+            ("Diseño de redes ecológicas", DANGER, lambda: self.mostrarActividad(2)),
             ("Salir", SECONDARY, self.root.quit)
         ]
         self.funcionesBtn = []  # Referencia a botones
@@ -119,9 +123,9 @@ Certificado Digital como 'Guardián del Bosque'"""
                 self.button_frame,
                 text=texto,
                 bootstyle=estilo,
-                command=comando
+                command=comando,
             )
-            btn.grid(row=i, column=0, sticky='ew', pady=5)
+            btn.grid(row=i, column=0, sticky='ew', pady=10)
             self.funcionesBtn.append(btn)  # Guardamos la referencia al botón
             
     def _crear_area_grafico(self):
@@ -131,7 +135,10 @@ Certificado Digital como 'Guardián del Bosque'"""
         self.graph_frame.grid(row=0, column=1, sticky='nswe', padx=10) # colocar grafo en columna 1
         
         # Crear figura de Matplotlib
-        self.fig, self.ax = plt.subplots(figsize=(10, 7))
+        self.fig, self.ax = plt.subplots(facecolor='none')
+        self.ax.set_facecolor('none')
+        self.fig.tight_layout()  # Automaticamente ajusta el canvas
+        self.fig.set_size_inches(9, 6) #Tamaño inicial del canvas
         self.fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
         
         # Canvas para el gráfico
@@ -143,36 +150,71 @@ Certificado Digital como 'Guardián del Bosque'"""
         self.canvas.mpl_connect("button_release_event", self.on_release)
         self.canvas.mpl_connect("motion_notify_event", self.on_motion)
             
-    def _definirZonas(self):
+    def _definirActividades(self):
                 # Definición de actividades
         self.actividades = []
 
         # Actividad 1
         actividad1 = {
-            "texto": """🔍 Actividad 1: Exploración de Ecosistemas
-        Objetivo: Identificar zonas contaminadas en el bosque.
+            "titulo":"""🔍 Actividad 1: Exploración de Ecosistemas""",
 
-        BFS (Recorrido en Anchura):
-        Encontrarás la zona contaminada más cercana a tu ubicación inicial.
-        Ideal para actuar rapidamente.
+            "texto": """Objetivo: Identificar y recorrer eficientemente alguna zona contaminada para planificar la recolección de residuos.
 
-        DFS (Recorrido en Profundidad):
-        Explorarás rutas complejas para detectar contaminación oculta o extendida.
-        Ideal para evaluar impactos ambientales a largo plazo.""",
+Metodos:
+
+BFS (Recorrido en Anchura):
+Encontrarás la zona contaminada más cercana a tu ubicación inicial.
+Ideal para actuar rapidamente
+
+DFS (Recorrido en Profundidad):
+Explorarás rutas complejas para detectar contaminación oculta o extendida.
+Ideal para evaluar impactos ambientales a largo plazo.""",
             "botones": [
-                ("BFS | Recorrido a lo ancho", PRIMARY),
-                ("DFS | Recorrido a lo profundo", PRIMARY),
-                ("Volver", DANGER)
+                ("BFS | Recorrido a lo ancho", PRIMARY, None),
+                ("DFS | Recorrido a lo profundo", PRIMARY, None),
+                ("Volver", DANGER, lambda: self.mostrarActividad(0))
             ]
         }
         
         actividad2 = {
-            "texto": """🔍 Actividad 2: [Título]
-        [Descripción completa]""",
+            "titulo":"""🔍 Actividad 2: Optimización de rutas de recolección""",
+            "texto": """Objetivo:
+Determinar la mejor ruta para transportar residuos a los centros de reciclaje con el menor costo posible.
+Los camiones o recolectores siguen estas rutas optimizadas para minimizar costos de transporte.
+
+Métodos:
+
+Dijkstra: Encuentra la ruta más corta desde un punto específico. Encuentra la zona contaminada más
+cercana desde un punto inicial, útil si la contaminación es dispersa.
+
+Floyd-Warshall: Encuentra las rutas más cortas entre todas las estaciones de recolección. útil si hay varias
+zonas contaminadas conectadas entre sí.""",
             "botones": [
-                ("Opción 1", PRIMARY),
-                ("Opción 2", PRIMARY),
-                ("Volver", DANGER)
+                ("Dijkstra", PRIMARY, None),
+                ("Floyd-Warshall", PRIMARY, None),
+                ("Volver", DANGER, lambda: self.mostrarActividad(1))
+            ]
+        }
+        
+        actividad3 = {
+            "titulo":"""🔍 Actividad 3: Diseño de redes ecológicas""",
+            "texto": """Objetivo:
+Construir un sistema eficiente de estaciones de reciclaje con la menor cantidad de recursos. Las estaciones
+de reciclaje serán ubicadas dentro de las zonas identificadas.
+
+Métodos:
+
+Prim: Es útil si las conexiones entre zonas son numerosas, es decir se tiene un bosque denso. Si el número
+de zonas E es cercano al número máximo posible de caminos (V(V−1)) /2, el bosque es denso.
+
+Kruskal: Se usa si las zonas están muy dispersas y hay pocos caminos. Si el número de caminos E es
+cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1), el bosque es disperso.""",
+
+            "botones": [
+                ("Prim", PRIMARY, None),
+                ("Kruskal", PRIMARY, None),
+                ("Densidad del bosque", PRIMARY, None),
+                ("Volver", DANGER, lambda: self.mostrarActividad(2))
             ]
         }
 
@@ -181,23 +223,35 @@ Certificado Digital como 'Guardián del Bosque'"""
             widgets = []
 
             # Crear label
+            ttl = ttk.Label(
+                master=self.button_frame,
+                text=actividad["titulo"],
+                font=("Montserrat Bold", 14),
+                justify="center",
+                wraplength=400,
+                padding=2
+            )
+            ttl.grid(row=row_start, pady=10)
+            widgets.append(ttl)
             lbl = ttk.Label(
                 master=self.button_frame,
                 text=actividad["texto"],
-                font=("Montserrat Light", 10),
+                font=("Montserrat Light", 12),
                 justify="left",
-                wraplength=300,
-                padding=1
+                wraplength=400,
+                padding=2
             )
-            lbl.grid(row=row_start, pady=5)
+            lbl.grid(row=row_start+1, pady=30)
             widgets.append(lbl)
 
             # Crear botones
-            for i, (texto, estilo) in enumerate(actividad["botones"], start=1):
+            for i, (texto, estilo, comando) in enumerate(actividad["botones"], start=2):
                 btn = ttk.Button(
                     self.button_frame,
                     text=texto,
-                    style=estilo
+                    style=estilo,
+                    width=30,
+                    command= comando
                 )
                 btn.grid(row=row_start+i, pady=5)
                 widgets.append(btn)
@@ -207,15 +261,19 @@ Certificado Digital como 'Guardián del Bosque'"""
         # Crear todas las actividades
         self.actividades.append(crear_actividad(actividad1))
         self.actividades.append(crear_actividad(actividad2))
+        self.actividades.append(crear_actividad(actividad3))
 
         # Ocultar todas las actividades inicialmente
         for actividad in self.actividades:
             for widget in actividad:
                 widget.grid_remove()
 
-    def exploracionZonas(self):
+    def mostrarActividad(self, id):
         for btn in self.funcionesBtn:
-            self.toggle_mostrar_ocultar(btn) # ocultar botones
+            self.toggle_mostrar_ocultar(btn) # ocultar o mostrar botones
+        
+        for widget in self.actividades[id]:
+            self.toggle_mostrar_ocultar(widget)
             
     def toggle_mostrar_ocultar(self, target: ttk.Frame):
         """
@@ -282,9 +340,8 @@ Certificado Digital como 'Guardián del Bosque'"""
 
                     self.G = G # cargar grafo
                     self.pos = nx.spring_layout(self.G, scale=1.6, k=3/sqrt(G.number_of_nodes()))
-                    self.dibujar_grafo()
                     self.asignar_zonas_contaminadas()
-
+                    
             except FileNotFoundError:
                 messagebox.showerror(message=f"Error: No se encontró el archivo en la ruta {ruta}")
             except ValueError as ve:
@@ -298,7 +355,7 @@ Certificado Digital como 'Guardián del Bosque'"""
             grafo = self.G
             vertices = list(grafo.nodes)
 
-            num_zonas_contaminadas = random.randint(1, len(vertices)-1)
+            num_zonas_contaminadas = random.randint(0,int(len(vertices)/2))
 
             zonas_contaminadas = set()
 
@@ -307,6 +364,7 @@ Certificado Digital como 'Guardián del Bosque'"""
                 if zona not in zonas_contaminadas:
                     zonas_contaminadas.add(zona)
             self.contaminadas = zonas_contaminadas
+        self.dibujar_grafo()
 
     def agregar_vertice(self):
         """
@@ -317,7 +375,7 @@ Certificado Digital como 'Guardián del Bosque'"""
             if nombre and nombre not in self.G.nodes:
                 self.G.add_node(nombre)
                 self.pos[nombre] = (len(self.G.nodes), len(self.G.nodes))  # Posición inicial
-                self.dibujar_grafo()
+                self.asignar_zonas_contaminadas()
             elif nombre in self.G.nodes:
                 messagebox.showerror(message="Ya existe esa zona.")
         else:
@@ -383,23 +441,30 @@ Certificado Digital como 'Guardián del Bosque'"""
             self.temp = []
         self.dibujar_grafo()
 
-    def dibujar_grafo(self, optColor:str="#ffc600", nodes: list = [], optColor2: str="#ff5353"):
+    def dibujar_grafo(self, optColor:str="#ffc600", optColor2: str="#ff5353"):
         """
-        Dibuja el grafo en la interfaz gráfica, resaltando aristas si se proveen.
+        Dibuja el grafo en la interfaz gráfica, resaltando aristas y nodos si se proveen.
         """
         self.ax.clear()
-        nodes_diff = list(self.G.nodes) - nodes
-        nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#00ff99', nodelist=nodes_diff) # no resaltados
-        nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color=optColor2, nodelist=nodes) # resaltados
-        nx.draw_networkx_labels(self.G, self.pos, font_size=10, font_family="Montserrat Bold", font_color='#161616')
-        edges_diff = set(self.G.edges) - set(self.resaltado)
-        edge_labels_diff = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in edges_diff}
-        edge_labels = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in self.resaltado if edge in self.G.edges}
-        print(edge_labels_diff)
-        nx.draw_networkx_edges(self.G, self.pos, edgelist=edges_diff, width=3)
-        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels_diff, font_size=10, font_color='#040404', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
-        nx.draw_networkx_edges(self.G, self.pos, edgelist=self.resaltado, edge_color=optColor, width=3)
-        nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels, font_size=10, font_color=optColor, font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.8})
+        if len(self.contaminadas) > 0: #reduciendo procesos
+            nodes_diff = set(self.G.nodes) - self.contaminadas
+            nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff) # no resaltados
+            nx.draw_networkx_nodes(self.G, self.pos, node_size=500, node_color=optColor2, nodelist=self.contaminadas) # resaltados
+        else:
+            nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff) # no resaltados
+        nx.draw_networkx_labels(self.G, self.pos, font_size=10, font_family="Montserrat", font_color='#ffffff', font_weight='bold') #labels de nodo
+
+        if len(self.resaltado) > 0:
+            edges_diff = set(self.G.edges) - set(self.resaltado)
+            edge_labels_diff = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in edges_diff}
+            edge_labels = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in self.resaltado if edge in self.G.edges}
+            nx.draw_networkx_edges(self.G, self.pos, edgelist=edges_diff, width=3, edge_color='#ffffff')
+            nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels_diff, font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
+            nx.draw_networkx_edges(self.G, self.pos, edgelist=self.resaltado, edge_color=optColor, width=3)
+            nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels, font_size=10, font_color=optColor, font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.8})
+        else:
+            nx.draw_networkx_edges(self.G, self.pos, width=3, edge_color='#ffffff')
+            nx.draw_networkx_edge_labels(self.G, self.pos, edge_labels={(u, v): d['weight'] for u, v, d in self.G.edges(data=True)} , font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6})
 
         self.canvas.draw()
 
