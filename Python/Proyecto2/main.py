@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
 from math import sqrt
+from PIL import Image, ImageTk
 import random
 from Resources import dstheme
 dstheme.__main__()
@@ -44,10 +45,31 @@ class GuardianesBosque:
         self.root.attributes('-topmost', True)
         self.root.focus_force()
     
+    def _inicializar_grafo(self):
+        """Inicializa el grafo y variables de estado"""
+        self.G = nx.Graph()
+        self.pos = {}
+        self.resaltado = []
+        self.contaminadas = []
+        self.isModifiable = True
+        self.dragging = None
+        
+    def load_image(self):
+        try:
+            # Cambia esta ruta por tu imagen
+            image_path = os.path.join(BASE_DIR, "Resources/shield.png")  
+            self.img = Image.open(image_path)
+            self.img = self.img.resize((int(self.img.width*0.5), int(self.img.height*0.5)), Image.LANCZOS)  # Ajusta tamaño
+            self.tk_img = ImageTk.PhotoImage(self.img)
+        except Exception as e:
+            print(f"Error al cargar imagen: {e}")
+            self.tk_img = None
+    
     def _crear_ventana_bienvenida(self):
-        self.bienvenida_frame = ttk.Frame(self.main_frame, width=1200)
+        self.load_image()
+        self.bienvenida_frame = ttk.Frame(self.main_frame, width=1200, padding=40)
         self.bienvenida_frame.grid(row=0,column=0)
-        label1 = ttk.Label(self.bienvenida_frame, text="BIENVENIDO A GUARDIANES DEL BOSQUE", font=("Montserrat Bold",35),foreground="#0fff6f", justify="center").grid(row=0,column=0, pady=30)
+        label1 = ttk.Label(self.bienvenida_frame, text="BIENVENIDO A GUARDIANES DEL BOSQUE", font=("Montserrat Bold",35),foreground="#0fff6f", justify="center").grid(row=0,column=0)
         intro_text = """🌿 Descubre como proteger nuestros ecosistemas con algoritmos 🌿 
 
 En esta capacitación, aprenderás a:
@@ -63,9 +85,11 @@ Certificado Digital como 'Guardián del Bosque'"""
             text=intro_text,
             font=("Montserrat Light", 18),
             justify="center",
-        ).grid(row=1,column=0)
+            image=self.tk_img,
+            compound="center"
+        ).grid(row=1,column=0, pady=30)
 
-        btn = ttk.Button(self.bienvenida_frame, text="Estoy Listo!", style=DANGER, command=self.continuar, width=40).grid(row=2,column=0, pady=30)
+        btn = ttk.Button(self.bienvenida_frame, text="Estoy Listo!", style=DANGER, command=self.continuar, width=40).grid(row=2,column=0)
 
     def continuar(self):
         self.toggle_mostrar_ocultar(self.bienvenida_frame)
@@ -73,7 +97,7 @@ Certificado Digital como 'Guardián del Bosque'"""
         
     def _crear_menu_frame(self):
         """Crea y organiza el frame del menú usando grid"""
-        self.menu_frame = ttk.Frame(self.main_frame, width=200)
+        self.menu_frame = ttk.Frame(self.main_frame, width=200, padding=30)
         # Frame de botones
         self.button_frame = ttk.Frame(self.menu_frame)
         self.menu_frame.grid(row=1, column=0, sticky='nswe')
@@ -85,18 +109,21 @@ Certificado Digital como 'Guardián del Bosque'"""
             ("Cargar archivo de zonas", PRIMARY, self.cargarGrafo),
             ("Agregar Zona de bosques", PRIMARY, self.agregar_vertice),
             ("Agregar/Actualizar ruta a una zona", PRIMARY, self.agregar_arista),
+            ("Exploración de zonas", PRIMARY, self.exploracionZonas),
             ("Salir", SECONDARY, self.root.quit)
         ]
-        
+        self.funcionesBtn = []  # Referencia a botones
+
         for i, (texto, estilo, comando) in enumerate(botones):
-            ttk.Button(
+            btn = ttk.Button(
                 self.button_frame,
                 text=texto,
                 bootstyle=estilo,
                 command=comando
-            ).grid(row=i, column=0, sticky='ew', pady=5)
-
-    
+            )
+            btn.grid(row=i, column=0, sticky='ew', pady=5)
+            self.funcionesBtn.append(btn)  # Guardamos la referencia al botón
+            
     def _crear_area_grafico(self):
         """Crea el área del gráfico a la derecha en menu_frame"""
         # Frame para el gráfico (derecha)
@@ -115,26 +142,91 @@ Certificado Digital como 'Guardián del Bosque'"""
         self.canvas.mpl_connect("button_press_event", self.on_press)
         self.canvas.mpl_connect("button_release_event", self.on_release)
         self.canvas.mpl_connect("motion_notify_event", self.on_motion)
-    
+            
+    def _definirZonas(self):
+                # Definición de actividades
+        self.actividades = []
+
+        # Actividad 1
+        actividad1 = {
+            "texto": """🔍 Actividad 1: Exploración de Ecosistemas
+        Objetivo: Identificar zonas contaminadas en el bosque.
+
+        BFS (Recorrido en Anchura):
+        Encontrarás la zona contaminada más cercana a tu ubicación inicial.
+        Ideal para actuar rapidamente.
+
+        DFS (Recorrido en Profundidad):
+        Explorarás rutas complejas para detectar contaminación oculta o extendida.
+        Ideal para evaluar impactos ambientales a largo plazo.""",
+            "botones": [
+                ("BFS | Recorrido a lo ancho", PRIMARY),
+                ("DFS | Recorrido a lo profundo", PRIMARY),
+                ("Volver", DANGER)
+            ]
+        }
+        
+        actividad2 = {
+            "texto": """🔍 Actividad 2: [Título]
+        [Descripción completa]""",
+            "botones": [
+                ("Opción 1", PRIMARY),
+                ("Opción 2", PRIMARY),
+                ("Volver", DANGER)
+            ]
+        }
+
+        # Función para crear actividades
+        def crear_actividad(actividad, row_start=0):
+            widgets = []
+
+            # Crear label
+            lbl = ttk.Label(
+                master=self.button_frame,
+                text=actividad["texto"],
+                font=("Montserrat Light", 10),
+                justify="left",
+                wraplength=300,
+                padding=1
+            )
+            lbl.grid(row=row_start, pady=5)
+            widgets.append(lbl)
+
+            # Crear botones
+            for i, (texto, estilo) in enumerate(actividad["botones"], start=1):
+                btn = ttk.Button(
+                    self.button_frame,
+                    text=texto,
+                    style=estilo
+                )
+                btn.grid(row=row_start+i, pady=5)
+                widgets.append(btn)
+
+            return widgets
+
+        # Crear todas las actividades
+        self.actividades.append(crear_actividad(actividad1))
+        self.actividades.append(crear_actividad(actividad2))
+
+        # Ocultar todas las actividades inicialmente
+        for actividad in self.actividades:
+            for widget in actividad:
+                widget.grid_remove()
+
+    def exploracionZonas(self):
+        for btn in self.funcionesBtn:
+            self.toggle_mostrar_ocultar(btn) # ocultar botones
+            
     def toggle_mostrar_ocultar(self, target: ttk.Frame):
         """
-        Muestra u oculta un ttk.Frame (target) con una disposición de grid pero sin olvidar las posiciones.
+        Muestra u oculta un widget (target) con una disposición de grid pero sin olvidar las posiciones.
         """
         print(target)
         if target.winfo_viewable():
             target.grid_remove()
         else:
             target.grid()
-    
-    def _inicializar_grafo(self):
-        """Inicializa el grafo y variables de estado"""
-        self.G = nx.Graph()
-        self.pos = {}
-        self.resaltado = []
-        self.contaminadas = []
-        self.isModifiable = True
-        self.dragging = None
-
+            
     def cargarGrafo(self):
         ruta = simpledialog.askstring(
         "Cargar zonas", 
@@ -191,6 +283,7 @@ Certificado Digital como 'Guardián del Bosque'"""
                     self.G = G # cargar grafo
                     self.pos = nx.spring_layout(self.G, scale=1.6, k=3/sqrt(G.number_of_nodes()))
                     self.dibujar_grafo()
+                    self.asignar_zonas_contaminadas()
 
             except FileNotFoundError:
                 messagebox.showerror(message=f"Error: No se encontró el archivo en la ruta {ruta}")
@@ -290,13 +383,15 @@ Certificado Digital como 'Guardián del Bosque'"""
             self.temp = []
         self.dibujar_grafo()
 
-    def dibujar_grafo(self, optColor:str="#ffc600"):
+    def dibujar_grafo(self, optColor:str="#ffc600", nodes: list = [], optColor2: str="#ff5353"):
         """
         Dibuja el grafo en la interfaz gráfica, resaltando aristas si se proveen.
         """
         self.ax.clear()
-        nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#00ff99')
-        nx.draw_networkx_labels(self.G, self.pos, font_size=10, font_family="Montserrat", font_color='#164435', font_weight='bold')
+        nodes_diff = list(self.G.nodes) - nodes
+        nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color='#00ff99', nodelist=nodes_diff) # no resaltados
+        nx.draw_networkx_nodes(self.G, self.pos, node_size=400, node_color=optColor2, nodelist=nodes) # resaltados
+        nx.draw_networkx_labels(self.G, self.pos, font_size=10, font_family="Montserrat Bold", font_color='#161616')
         edges_diff = set(self.G.edges) - set(self.resaltado)
         edge_labels_diff = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in edges_diff}
         edge_labels = {edge: self.G[edge[0]][edge[1]]["weight"] for edge in self.resaltado if edge in self.G.edges}
