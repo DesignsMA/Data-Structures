@@ -9,6 +9,7 @@ from math import sqrt
 from PIL import Image, ImageTk
 import random
 from Resources import dstheme
+from Scripts import *
 dstheme.__main__()
 # Ruta base (ej: "C:/grafo/")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -22,9 +23,9 @@ class GuardianesBosque:
         """
         self.root = root
         self._configurar_fuentes()
-        self._configurar_ventana()
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(fill='both', expand=True) # crando frame inicial
+        self._configurar_ventana()
         self._crear_ventana_bienvenida()
         self._crear_menu_frame()  # Separamos la creación del menú
         self._crear_area_grafico() # Se añade el gráfico al menu frame
@@ -45,6 +46,10 @@ class GuardianesBosque:
         """Configura propiedades de la ventana"""
         self.root.attributes('-topmost', True)
         self.root.focus_force()
+        self.root.state('zoomed')  # Para Windows
+        # Configuración de expansión de la ventana principal
+        self.main_frame.grid_rowconfigure(0, weight=1)
+        self.main_frame.grid_columnconfigure(0, weight=1)
     
     def _inicializar_grafo(self):
         """Inicializa el grafo y variables de estado"""
@@ -71,9 +76,33 @@ class GuardianesBosque:
     
     def _crear_ventana_bienvenida(self):
         self.load_image()
-        self.bienvenida_frame = ttk.Frame(self.main_frame, width=1200, padding=40)
-        self.bienvenida_frame.grid(row=0,column=0)
-        label1 = ttk.Label(self.bienvenida_frame, text="BIENVENIDO A GUARDIANES DEL BOSQUE", font=("Montserrat Bold",35),foreground="#0fff6f", justify="center").grid(row=0,column=0)
+
+        # Frame principal que ocupará toda la ventana
+        self.bienvenida_frame = ttk.Frame(self.main_frame)
+        self.bienvenida_frame.grid(row=0, column=0, sticky="nsew")
+
+        # Configuración para centrado perfecto
+        self.bienvenida_frame.grid_rowconfigure(0, weight=1)  # Espacio superior
+        self.bienvenida_frame.grid_rowconfigure(1, weight=0)  # Contenido
+        self.bienvenida_frame.grid_rowconfigure(2, weight=1)  # Espacio inferior
+        self.bienvenida_frame.grid_columnconfigure(0, weight=1)  # Centrado horizontal
+
+
+        # Frame interno para el contenido (centrado)
+        contenido_frame = ttk.Frame(self.bienvenida_frame)
+        contenido_frame.grid(row=0, column=0, sticky="")
+
+        # Título principal
+        label1 = ttk.Label(
+            contenido_frame, 
+            text="BIENVENIDO A GUARDIANES DEL BOSQUE", 
+            font=("Montserrat Bold", 35),
+            foreground="#0fff6f", 
+            justify="center"
+        )
+        label1.grid(row=0, column=0, pady=(0, 20))
+
+        # Texto de introducción
         intro_text = """🌿 Descubre como proteger nuestros ecosistemas con algoritmos 🌿 
 
 En esta capacitación, aprenderás a:
@@ -82,18 +111,35 @@ En esta capacitación, aprenderás a:
 • Diseñar redes de reciclaje
 
 Al completar las actividades, recibirás un
-Certificado Digital como 'Guardián del Bosque'"""
+Certificado Digital como 'Guardián del Bosque'
 
+Para completar una actividad deberás:
+• Acceder a todas las actividades
+• Usar cada función exitosamente
+
+Cuando todas las actividades se completen
+aparecerá un botón al final para generar
+tu certificado.
+"""
         intro_label = ttk.Label(
-            master=self.bienvenida_frame,
+            master=contenido_frame,
             text=intro_text,
-            font=("Montserrat Light", 18),
+            font=("Montserrat Light", 14),
             justify="center",
             image=self.tk_img,
             compound="center"
-        ).grid(row=1,column=0, pady=30)
+        )
+        intro_label.grid(row=1, column=0, pady=20)
 
-        btn = ttk.Button(self.bienvenida_frame, text="Estoy Listo!", style=DANGER, command=self.continuar, width=40).grid(row=2,column=0)
+        # Botón de acción
+        btn = ttk.Button(
+            contenido_frame, 
+            text="Estoy Listo!", 
+            style=DANGER, 
+            command=self.continuar, 
+            width=40
+        )
+        btn.grid(row=2, column=0, pady=(20, 0))
 
     def continuar(self):
         self.toggle_mostrar_ocultar(self.bienvenida_frame)
@@ -210,9 +256,9 @@ DFS (Recorrido en Profundidad):
 Explorarás rutas complejas para detectar contaminación oculta o extendida.
 Ideal para evaluar impactos ambientales a largo plazo.""",
             "botones": [
-                ("BFS | Recorrido a lo ancho", PRIMARY, None),
+                ("BFS | Recorrido a lo ancho", PRIMARY, self.bfs),
                 ("DFS | Recorrido a lo profundo", PRIMARY, None),
-                ("Volver", DANGER, lambda: self.mostrarActividad(0))
+                ("Volver", DANGER, lambda: self.volver(0))
             ]
         }
         
@@ -482,19 +528,39 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
         dfs(root)
         return posiciones            
     
-    def reset(self):
+    def bfs(self):
         """
-        Reiniciar la vista.
+        Encuentra la zona contaminada más cercana con un árbol de expansion (bfs).
         """
-        if len(self.temp) > 0:
-            self.G, self.pos = self.temp
-            self.resaltado = []
-            self.isModifiable = True
-            self.temp = []
-            
+        origen = simpledialog.askstring("BFS", "Ingrese el nodo origen:", parent=self.root)
+        self.root.update()  # Actualizar la ventana
+        if origen in self.G.nodes:
+            arbol = bfs_amplitud(self.G,origen) # generar arbol bfs
+            distancia, nodo, ruta = encontrar_mas_cercano_con_ruta(arbol,origen,self.contaminadas)
+            if distancia > -1:
+                self.resaltado = ruta
+                messagebox.showinfo("Resultado", f"El nodo más cercano a {origen} es {nodo}, se encuentra a {distancia} nodo(s) de distancia.")
+                self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
+            else:
+                messagebox.showwarning("Atención", f"No se encontro ningún nodo cercano a {origen}")
+        else:
+            messagebox.showerror("Error", "El nodo debe existir.")
+    
+    def volver(self, id):
+        """
+        Reiniciar la vista al volver.
+        """
+        self.mostrarActividad(id)
+        self.resaltado = []            
         self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
+    
+    def volverGraficos(self,id):
+        """
+        Reinicia la vista al volver, reinicia tambien la vista de gráficos.
+        """
+        pass
 
-    def dibujar_grafo(self,G,ax,canvas,pos,resaltado,contaminadas, optColor:str="#ffc600", optColor2: str="#ff5353"):
+    def dibujar_grafo(self,G,ax,canvas,pos,resaltado,contaminadas, optColor:str="#ff5353", optColor2: str="#ff5353"):
         """
         Dibuja el grafo en la interfaz gráfica, resaltando aristas y nodos si se proveen.
         """
