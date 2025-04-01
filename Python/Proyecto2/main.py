@@ -59,6 +59,7 @@ class GuardianesBosque:
         self.secondary_pos = {}
         self.resaltado = []
         self.contaminadas = set()
+        self.roadmap = set()
         self.isModifiable = True
         self.dragging = None
         self.secondary_dragging = None
@@ -541,6 +542,7 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
                 self.resaltado = ruta
                 messagebox.showinfo("Resultado", f"El nodo más cercano a {origen} es {nodo}, se encuentra a {distancia} nodo(s) de distancia.")
                 self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
+                self.roadmap.add('A11') # marcar como hecho
             else:
                 messagebox.showwarning("Atención", f"No se encontro ningún nodo cercano a {origen}")
         else:
