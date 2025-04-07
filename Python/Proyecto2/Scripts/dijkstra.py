@@ -5,7 +5,7 @@ def reconstruirCaminoDijkstra(G, origen, predecesores: dict, destino: str = None
     :param origen: Nodo de origen.
     :param predecesores: Diccionario de predecesores.
     :param destino: Nodo de destino (opcional). Si no se especifica, se reconstruyen todos los caminos.
-    :return: Lista de caminos más cortos.
+    :return: Lista de caminos más cortos (aristas) desde origen hasta destino.
     """
     # Si no se proporciona un destino, reconstruir todos los caminos
     if destino is None:
@@ -31,10 +31,13 @@ def reconstruirCaminoDijkstra(G, origen, predecesores: dict, destino: str = None
             aristas.append(camino)
     return aristas
 
-def dijkstraFunc(G, origen, destino: str = 'todo'):
+def dijkstraFunc(G, origen, contaminadas, destino: str = 'todo'):
     """
     Implementa el algoritmo de Dijkstra para encontrar los caminos más cortos desde un nodo origen.
+    :param G: Grafo dirigido.
     :param origen: Nodo desde el cual se calcularán los caminos más cortos.
+    :param contaminadas: Conjunto de zonas contaminadas.
+    :param destino: Nodo de destino (opcional). Si no se especifica, se calculan todos los caminos.
     :return: Tupla con las distancias más cortas, los predecesores de cada nodo, lista de aristas del camino.
     """
     n = G.number_of_nodes()
@@ -43,7 +46,7 @@ def dijkstraFunc(G, origen, destino: str = 'todo'):
     C = np.full((n, n), np.inf)
     for a, b in G.edges:
         C[V.index(a), V.index(b)] = G.adj[a][b]['weight']
-    print("Matriz de costos:\n", C)
+
     # Inicialización de S, D y P
     S = set([origen])
     D = {}  # Diccionario de distancias
@@ -60,7 +63,6 @@ def dijkstraFunc(G, origen, destino: str = 'todo'):
     # Bucle principal
     Predecesores = {v: {} for v in V}
     for _ in range(n - 1):
-        P = {}  # Reiniciando P
         w = min((v for v in V if v not in S), key=lambda v: D[v])
         S.add(w)
         # Actualiza las distancias de los vecinos de w
@@ -70,7 +72,14 @@ def dijkstraFunc(G, origen, destino: str = 'todo'):
                     P[v] = w
                     D[v] = D[w] + C[V.index(w), V.index(v)]
                     Predecesores[V[V.index(v)]] = P
+
+    # Si se pide el camino hacia un destino específico
     if destino == 'todo':
-        return D, Predecesores, reconstruirCaminoDijkstra(G,origen,Predecesores)
+        # Encontramos la zona contaminada más cercana
+        zona_contaminada_mas_cercana = min(contaminadas, key=lambda x: D[x])  # Nodo contaminado más cercano
+        # Reconstruir el camino hacia la zona contaminada más cercana
+        ruta = reconstruirCaminoDijkstra(G, origen, Predecesores, zona_contaminada_mas_cercana)
+        return D[zona_contaminada_mas_cercana], Predecesores[zona_contaminada_mas_cercana], ruta
     else:
-        return D[destino], Predecesores[destino], reconstruirCaminoDijkstra(G,origen,Predecesores,destino)
+        # Reconstruir el camino hacia el destino específico
+        return D[destino], Predecesores[destino], reconstruirCaminoDijkstra(G, origen, Predecesores, destino)

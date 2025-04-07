@@ -5,6 +5,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
+from datetime import datetime
 from math import sqrt
 from PIL import Image, ImageTk
 import random
@@ -25,13 +26,14 @@ class GuardianesBosque:
         self._configurar_fuentes()
         self.main_frame = ttk.Frame(self.root)
         self.main_frame.pack(fill='both', expand=True) # crando frame inicial
+        self._inicializar_grafo()
         self._configurar_ventana()
         self._crear_ventana_bienvenida()
         self._crear_menu_frame()  # Separamos la creación del menú
         self._crear_area_grafico() # Se añade el gráfico al menu frame
-        self._inicializar_grafo()
         self._definirActividades()
         self.menu_frame.grid_remove()
+        self.leerDatos()
         
     def _configurar_fuentes(self):
         """Configura las fuentes globales"""
@@ -59,6 +61,7 @@ class GuardianesBosque:
         self.secondary_pos = {}
         self.resaltado = []
         self.contaminadas = set()
+        self.zonasReciclaje = set()
         self.roadmap = set()
         self.isModifiable = True
         self.dragging = None
@@ -145,6 +148,8 @@ tu certificado.
     def continuar(self):
         self.toggle_mostrar_ocultar(self.bienvenida_frame)
         self.toggle_mostrar_ocultar(self.menu_frame)
+        messagebox.showinfo(message="En esta pantalla podrá editar y cargar un grafo que representa la zona de bosques que debemos proteger, tambien serán asignadas zonas contaminadas aleatorias, sin embargo puede generar nuevas presionando el botón.")
+        
         
     def _crear_menu_frame(self):
         """Crea y organiza el frame del menú usando grid"""
@@ -167,7 +172,7 @@ tu certificado.
             ("Salir", SECONDARY, self.root.quit)
         ]
         self.funcionesBtn = []  # Referencia a botones
-
+        
         for i, (texto, estilo, comando) in enumerate(botones):
             btn = ttk.Button(
                 self.button_frame,
@@ -177,7 +182,19 @@ tu certificado.
             )
             btn.grid(row=i, column=0, sticky='ew', pady=10)
             self.funcionesBtn.append(btn)  # Guardamos la referencia al botón
-            
+        
+        preguntas = {11,12,21,22,31,32}
+        if preguntas.issubset(self.roadmap):
+            msgCompletado = 'Generar certificado'
+            estado = ttk.ACTIVE
+        else:
+            msgCompletado = 'Actividades pendientes'
+            estado = ttk.DISABLED
+        self.btnCertificado = ttk.Button(self.button_frame, text=msgCompletado, style=DANGER, command=self.root.quit, state=estado)
+        self.btnCertificado.grid(row=i+1,sticky='ew', pady=30)
+        self.funcionesBtn.append(self.btnCertificado)
+        
+    
     def _crear_area_grafico(self):
         """Crea el área del gráfico con dos figuras (una visible, otra oculta)"""
         # Frame contenedor principal
@@ -222,7 +239,7 @@ tu certificado.
                 canvas.mpl_connect("motion_notify_event", 
                                   lambda e: self.on_motion(e, self.pos, 'dragging',
                                                         self.G, ax, canvas,
-                                                        self.resaltado, self.contaminadas))
+                                                        self.resaltado, self.contaminadas, self.zonasReciclaje))
                 self.fig, self.ax, self.canvas = fig, ax, canvas
                 self.dragging = None  # Estado de arrastre para figura principal
         else:
@@ -234,12 +251,13 @@ tu certificado.
                 canvas.mpl_connect("motion_notify_event", 
                                   lambda e: self.on_motion(e, self.secondary_pos, 'secondary_dragging',
                                                         self.H, ax, canvas,
-                                                        self.resaltado, self.contaminadas))
+                                                        self.resaltado, self.contaminadas, self.zonasReciclaje))
                 self.secondary_fig, self.secondary_ax, self.secondary_canvas = fig, ax, canvas
                 self.secondary_dragging = None  # Estado de arrastre para figura secundaria            
     def _definirActividades(self):
                 # Definición de actividades
         self.actividades = []
+        self.preguntas = [] # lista de widgets para una pregunta
 
         # Actividad 1
         actividad1 = {
@@ -247,42 +265,84 @@ tu certificado.
 
             "texto": """Objetivo: Identificar y recorrer eficientemente alguna zona contaminada para planificar la recolección de residuos.
 
-Metodos:
+Algoritmos:
 
-BFS (Recorrido en Anchura):
-Encontrarás la zona contaminada más cercana a tu ubicación inicial.
-Ideal para actuar rapidamente
+BFS (Breadth-First Search - Recorrido en Anchura)
+El BFS explora un grafo por nivel, comenzando desde un punto inicial y expandiéndose a todos los vecinos inmediatos antes de avanzar a zonas más lejanos. Utiliza una cola para garantizar que los zonas se visiten en orden de proximidad, lo que asegura que siempre encuentre la solución más cercana primero. Es eficiente en espacios donde la distancia o el tiempo de acceso son críticos.
 
-DFS (Recorrido en Profundidad):
-Explorarás rutas complejas para detectar contaminación oculta o extendida.
-Ideal para evaluar impactos ambientales a largo plazo.""",
+DFS (Depth-First Search - Recorrido en Profundidad)
+El DFS recorre un grafo o matriz avanzando lo más posible por una rama antes de retroceder y probar caminos alternativos. Usa una pila (o recursión) para profundizar en una dirección hasta agotar las opciones, lo que lo hace útil para explorar estructuras complejas o laberínticas. A diferencia del BFS, no garantiza encontrar la solución más cercana, pero puede descubrir rutas menos evidentes o patrones ocultos.""",
             "botones": [
-                ("BFS | Recorrido a lo ancho", PRIMARY, self.bfs),
-                ("DFS | Recorrido a lo profundo", PRIMARY, None),
+                ("Problema 1", PRIMARY, lambda: self.mostrarPregunta(0,0)),
+                ("Problema 2", PRIMARY, lambda: self.mostrarPregunta(0,1)),
                 ("Volver", DANGER, lambda: self.volver(0))
             ]
         }
         
-        actividad2 = {
-            "titulo":"""🔍 Actividad 2: Optimización de rutas de recolección""",
-            "texto": """Objetivo:
-Determinar la mejor ruta para transportar residuos a los centros de reciclaje con el menor costo posible.
-Los camiones o recolectores siguen estas rutas optimizadas para minimizar costos de transporte.
+        p1 = {
+            "titulo":"""¿Cúal sería el algoritmo más apropiado para encontrar la zona contaminada más cercana a otra considerando solo las conexiones?""",
 
-Métodos:
-
-Dijkstra: Encuentra la ruta más corta desde un punto específico. Encuentra la zona contaminada más
-cercana desde un punto inicial, útil si la contaminación es dispersa.
-
-Floyd-Warshall: Encuentra las rutas más cortas entre todas las estaciones de recolección. útil si hay varias
-zonas contaminadas conectadas entre sí.""",
+            "texto": """...""",
             "botones": [
-                ("Dijkstra", PRIMARY, None),
-                ("Floyd-Warshall", PRIMARY, None),
-                ("Volver", DANGER, lambda: self.mostrarActividad(1))
+                ("BFS", PRIMARY, lambda: self.validarRespuesta(11,1,1,'BFS es ideal para encontrar la zona contaminada más cercana, ahora realizemos un ejemplo!',algoritmo=self.bfs)),
+                ("DFS", PRIMARY, lambda: self.validarRespuesta(11,1,0)),
+                ("Volver", DANGER, lambda: self.mostrarPregunta(0,0))
             ]
         }
         
+        p2 = {
+            "titulo":"""¿Cúal sería el algoritmo más apropiado para explorar a fondo cada zona y con esto detectar problemas más extensos?""",
+
+            "texto": """...""",
+            "botones": [
+                ("BFS", PRIMARY, lambda:self.validarRespuesta(12,1,0)),
+                ("DFS", PRIMARY, lambda: self.validarRespuesta(12,1,1,'DFS es ideal para identificar problemas más extensos, ahora realizemos un ejemplo!',algoritmo=self.dfs)),
+                ("Volver", DANGER, lambda: self.mostrarPregunta(0,1, True))
+            ]
+        }
+
+        actividad2 = {
+            "titulo": """🔍 Actividad 2: Optimización de rutas de recolección""",
+            "texto": """Objetivo:
+        Determinar la mejor ruta para transportar residuos a los centros de reciclaje con el menor costo posible.
+        Los camiones o recolectores siguen estas rutas optimizadas para minimizar costos de transporte.
+
+        Métodos:
+
+        Dijkstra: Encuentra la ruta más corta desde un punto específico. Encuentra la zona contaminada más cercana desde un punto inicial, útil si la contaminación es dispersa.
+
+        Floyd-Warshall: Encuentra las rutas más cortas entre todas las estaciones de recolección. Es útil si hay varias zonas contaminadas conectadas entre sí, ya que permite encontrar las rutas más cortas entre todos los puntos de recolección."""
+            ,
+            "botones": [
+                ("Problema 1", PRIMARY, lambda: self.mostrarPregunta(1, 0, generarZonasReciclaje=True)),
+                ("Problema 2", PRIMARY, lambda: self.mostrarPregunta(1, 1, generarZonasReciclaje=True)),
+                ("Volver", DANGER, lambda: self.volver(1))
+            ]
+        }
+
+        # Pregunta 1
+        p3 = {
+            "titulo": """¿Qué algoritmo sería el más adecuado para encontrar la ruta más corta desde un punto específico a otro para una recolección eficiente?""",
+            "texto": """Dado un mapa de rutas y un punto inicial, necesitas encontrar la ruta más corta hacia un destino específico para optimizar el proceso de recolección. Este algoritmo debe ser capaz de evaluar el costo de las rutas de manera eficiente."""
+            ,
+            "botones": [
+                ("Dijkstra", PRIMARY, lambda: self.validarRespuesta(21, 1, 1, 'Dijkstra es ideal para encontrar la ruta más corta desde un punto inicial, ahora realizemos un ejemplo!', algoritmo=self.dijkstra)),
+                ("Floyd-Warshall", PRIMARY, lambda: self.validarRespuesta(21, 1, 0)),
+                ("Volver", DANGER, lambda: self.mostrarPregunta(1, 0))
+            ]
+        }
+
+        # Pregunta 2
+        p4 = {
+            "titulo": """¿Qué algoritmo sería el más adecuado si necesitamos encontrar todas las rutas más cortas entre todas las estaciones de recolección?""",
+            "texto": """En este caso, necesitas conocer las rutas más cortas entre todas las estaciones de recolección. Este algoritmo será útil cuando existan múltiples puntos de recolección y desees optimizar el transporte entre todos los puntos.""" 
+            ,
+            "botones": [
+                ("Dijkstra", PRIMARY, lambda: self.validarRespuesta(22, 1, 0)),
+                ("Floyd-Warshall", PRIMARY, lambda: self.validarRespuesta(22, 1, 1, 'Floyd-Warshall es ideal para encontrar todas las rutas más cortas entre todos los puntos de recolección, ahora realizemos un ejemplo!', algoritmo=self.floyd_warshall)),
+                ("Volver", DANGER, lambda: self.mostrarPregunta(1, 1))
+            ]
+        }        
         actividad3 = {
             "titulo":"""🔍 Actividad 3: Diseño de redes ecológicas""",
             "texto": """Objetivo:
@@ -313,24 +373,24 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
             ttl = ttk.Label(
                 master=self.button_frame,
                 text=actividad["titulo"],
-                font=("Montserrat Bold", 13),
+                font=("Montserrat Bold", 12),
                 justify="center",
                 wraplength=400,
                 padding=2
             )
-            ttl.grid(row=row_start, pady=10)
+            ttl.grid(row=row_start, pady=3)
             widgets.append(ttl)
             lbl = ttk.Label(
                 master=self.button_frame,
                 text=actividad["texto"],
-                font=("Montserrat Light", 11),
+                font=("Montserrat Light", 10),
                 justify="left",
                 wraplength=400,
             )
-            lbl.grid(row=row_start+1, pady=30)
+            lbl.grid(row=row_start+1, pady=10)
             widgets.append(lbl)
 
-            # Crear botones
+            # Crear botones principales
             for i, (texto, estilo, comando) in enumerate(actividad["botones"], start=2):
                 btn = ttk.Button(
                     self.button_frame,
@@ -341,18 +401,25 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
                 )
                 btn.grid(row=row_start+i, pady=5)
                 widgets.append(btn)
-
             return widgets
 
         # Crear todas las actividades
         self.actividades.append(crear_actividad(actividad1))
+        self.preguntas.append([crear_actividad(p1), crear_actividad(p2)]) # arreglos de preguntas
         self.actividades.append(crear_actividad(actividad2))
+        self.preguntas.append([crear_actividad(p3), crear_actividad(p4)]) # arreglos de preguntas
         self.actividades.append(crear_actividad(actividad3))
+        
 
         # Ocultar todas las actividades inicialmente
         for actividad in self.actividades:
             for widget in actividad:
                 widget.grid_remove()
+
+        for preguntas in self.preguntas: # ocultar preguntas
+            for pregunta in preguntas:
+                for widget in pregunta:
+                    widget.grid_remove()
 
     def mostrarActividad(self, id):
         for btn in self.funcionesBtn:
@@ -361,19 +428,81 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
         for widget in self.actividades[id]:
             self.toggle_mostrar_ocultar(widget)
     
-    def prim(self):
-        # 1. Cambiar el tamaño de la figura
-        self.fig.set_size_inches(5, 7)  # Nuevo tamaño en pulgadas (ancho, alto)
+    def mostrarPregunta(self, idActividad, idPregunta, reiniciarGrafico: bool = False, generarZonasReciclaje: bool = False):
+        for widget in self.actividades[idActividad]: # mostrar u ocultar actividad
+            self.toggle_mostrar_ocultar(widget)
+            
+        for widget in self.preguntas[idActividad][idPregunta]: # mostrar pregunta idPregunta de la actividad idActividad
+            self.toggle_mostrar_ocultar(widget)
+        
+        if reiniciarGrafico:
+            self.reiniciarGraficos()
+        
+        if generarZonasReciclaje:
+            self.asignar_zonas_reciclaje()
+    
+    def validarRespuesta(self, id,correcta: int, respuesta: int, 
+                        msgCorrecto: str = 'Tu respuesta es correcta', msgIncorrecto: str = 'Tu respuesta es incorrecta!', 
+                        algoritmo=None, *args):
+        """
+        Valida si una respuesta es correcta y ejecuta una función callback si lo es.
 
-        # 3. Actualizar el canvas
-        self.canvas.draw()  # Esto fuerza el redibujado
+        Args:
+            correcta (int): Respuesta correcta esperada
+            respuesta (int): Respuesta proporcionada por el usuario
+            msgCorrecto (str): Mensaje a mostrar si es correcto
+            msgIncorrecto (str): Mensaje a mostrar si es incorrecto
+            algoritmo (callable, optional): Función a ejecutar si es correcto
+            *args: Argumentos adicionales para la función algoritmo
+        """
+        if self.G.number_of_edges() > 0:
+            if respuesta == correcta:
+                messagebox.showinfo("Correcto!", msgCorrecto)
+                self.roadmap.add(id)
+                self.guardarDatos()
+                if algoritmo:  # Verifica que se haya proporcionado un algoritmo
+                    algoritmo(*args)  # Desempaqueta los argumentos
+            else:
+                messagebox.showinfo("Incorrecto", msgIncorrecto)
+        else:
+            messagebox.showinfo(message="Carga al menos una zona conectada con otra para continuar.")
+    
+    def guardarDatos(self):
+        ruta_archivo = os.path.join(BASE_DIR, f"Resources/data.dat")
+        # Asegurarse de que el directorio exista
+        os.makedirs(os.path.dirname(ruta_archivo), exist_ok=True)
+        with open(ruta_archivo, "wb") as file: #escribir en binario
+                # Escribir el número de elementos en el set
+            file.write(len(self.roadmap).to_bytes(4, byteorder='big'))  # Guardamos el número de elementos (4 bytes)
+    
+            # Escribir cada entero en el set como bytes
+            for elemento in self.roadmap:
+                # Convertir el entero a bytes (4 bytes por entero)
+                file.write(elemento.to_bytes(4, byteorder='big'))
+    
+    def leerDatos(self):
+        ruta_archivo = os.path.join(BASE_DIR, f"Resources/data.dat")
+        with open(ruta_archivo, "rb") as file: #escribir en binario
+            n = int.from_bytes( file.read(4), byteorder='big') # leer tamaño del set
+            # Escribir cada entero en el set como bytes
+            for _ in range(n):
+                self.roadmap.add( int.from_bytes(file.read(4), byteorder='big') ) #recuperar set
 
-        # 4. Reconfigurar el widget en Tkinter 
-        self.canvas.get_tk_widget().config(width=int(5*self.fig.dpi), height=int(7*self.fig.dpi))
-        self.toggle_mostrar_ocultar(self.secondary_graph)
-        self.H = self.G
-        self.secondary_pos = self.generar_posiciones_arbol(self.H,'A')
-        self.dibujar_grafo(self.H,self.secondary_ax,self.secondary_canvas,self.secondary_pos,self.resaltado,self.contaminadas)
+    def volver(self, id):
+        """
+        Reinicia la vista para volver al menú principal, limpiando los resaltados y redes.
+
+        Esta función restablece la interfaz gráfica, mostrando el menú principal de actividades y 
+        limpiando cualquier resaltado de nodos o aristas que estuviera presente en la vista anterior.
+
+        Args:
+            id (int): Identificador de la actividad a mostrar en el menú principal. 
+                      Este valor determina qué actividad o pantalla será mostrada tras regresar.
+        """
+        self.mostrarActividad(id)
+        self.resaltado = []
+        self.zonasReciclaje = set()            
+        self.dibujar_grafo(self.G, self.ax, self.canvas, self.pos, self.resaltado, self.contaminadas)
             
     def toggle_mostrar_ocultar(self, target: ttk.Frame):
         """
@@ -401,17 +530,17 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
                         raise ValueError("La primera línea debe ser 'True' o 'False' para indicar si es dirigido")
                     isDiGraph = primera_linea == 'True'
 
-                    # Leer nodos
+                    # Leer zonas
                     segunda_linea = file.readline().strip()
                     if not segunda_linea:
-                        raise ValueError("Falta la línea de nombres de nodos")
-                    nodos = segunda_linea.split(',')
+                        raise ValueError("Falta la línea de nombres de zonas")
+                    zonas = segunda_linea.split(',')
 
                     # Leer matriz de adyacencia
                     matriz = []
                     for i, linea in enumerate(file):
                         valores = linea.strip().split(',')
-                        if len(valores) != len(nodos):
+                        if len(valores) != len(zonas):
                             raise ValueError(f"La fila {i+3} no tiene el número correcto de columnas")
                         try:
                             fila = [float(val) if val else 0.0 for val in valores]
@@ -420,22 +549,22 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
                         matriz.append(fila)
 
                     # Verificar matriz cuadrada
-                    if len(matriz) != len(nodos):
+                    if len(matriz) != len(zonas):
                         raise ValueError("La matriz de adyacencia no es cuadrada")
 
                     # Crear grafo
                     G = nx.DiGraph() if isDiGraph else nx.Graph()
-                    G.add_nodes_from(nodos)
+                    G.add_nodes_from(zonas)
 
                     # Añadir aristas con pesos
-                    for i in range(len(nodos)):
-                        for j in range(len(nodos)):
+                    for i in range(len(zonas)):
+                        for j in range(len(zonas)):
                             peso = matriz[i][j]
                             if peso != 0:
                                 if isDiGraph or (not isDiGraph and i <= j):
-                                    if nodos[i] == nodos[j]:
+                                    if zonas[i] == zonas[j]:
                                         raise ValueError(f"Columna {i} | Fila {j}\nNo puede haber una ruta a si mismo.")
-                                    G.add_edge(nodos[i], nodos[j], weight=peso)
+                                    G.add_edge(zonas[i], zonas[j], weight=peso)
 
                     self.G = G # cargar grafo
                     self.pos = nx.spring_layout(self.G, scale=1.6, k=3/sqrt(G.number_of_nodes()))
@@ -450,11 +579,11 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
             return None
     
     def asignar_zonas_contaminadas(self):
-        if self.isModifiable and self.G.number_of_nodes() > 2:
+        if self.G.number_of_nodes() > 2:
             grafo = self.G
             vertices = list(grafo.nodes)
 
-            num_zonas_contaminadas = random.randint(0,int(len(vertices)/2))
+            num_zonas_contaminadas = random.randint(1,int(len(vertices)/2))
 
             zonas_contaminadas = set()
 
@@ -465,62 +594,75 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
             self.contaminadas = zonas_contaminadas
         self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
 
+    def asignar_zonas_reciclaje(self):
+        if self.G.number_of_nodes() > 2:
+           grafo = self.G
+           vertices = list(grafo.nodes)
+   
+           # Determinamos un número aleatorio de zonas de reciclaje (por ejemplo, hasta la mitad del número de nodos)
+           num_zonas_reciclaje = random.randint(1, int(len(vertices) / 2))
+   
+           # Creamos un conjunto para almacenar las zonas de reciclaje
+           zonas_reciclaje = set()
+   
+           # Aseguramos que las zonas de reciclaje no sean las mismas que las zonas contaminadas
+           while len(zonas_reciclaje) < num_zonas_reciclaje:
+               zona = random.choice(vertices)
+               if zona not in zonas_reciclaje and zona not in self.contaminadas:
+                   zonas_reciclaje.add(zona)
+   
+           # Asignamos las zonas de reciclaje
+           self.zonasReciclaje = zonas_reciclaje
+        self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas, optColor2='#e59b06', resaltado2=self.zonasReciclaje)
     def agregar_vertice(self):
         """
         Agrega un vértice al grafo. Solicita al usuario el nombre del vértice.
         """
-        if self.isModifiable:
-            nombre = simpledialog.askstring("Agregar Vértice", "Ingrese el nombre del vértice:", parent=self.root)
-            if nombre and nombre not in self.G.nodes:
-                self.G.add_node(nombre)
-                self.pos[nombre] = (len(self.G.nodes), len(self.G.nodes))  # Posición inicial
-                self.asignar_zonas_contaminadas()
-            elif nombre in self.G.nodes:
-                messagebox.showerror(message="Ya existe esa zona.")
-        else:
-            messagebox.showerror(message="Actualmente solo esta visualizando el árbol generado.")
+        nombre = simpledialog.askstring("Agregar Zona", "Ingrese el nombre de la zona:", parent=self.root)
+        if nombre and nombre not in self.G.nodes:
+            self.G.add_node(nombre)
+            self.pos[nombre] = (len(self.G.nodes), len(self.G.nodes))  # Posición inicial
+            self.asignar_zonas_contaminadas()
+        elif nombre in self.G.nodes:
+            messagebox.showerror(message="Ya existe esa zona.")
 
     def agregar_arista(self):
         """
-        Agrega una arista al grafo. Solicita al usuario el nodo origen, nodo destino y peso de la arista.
+        Agrega una arista al grafo. Solicita al usuario el zona origen, zona destino y peso de la arista.
         """
-        if self.isModifiable:
-            origen = simpledialog.askstring("Agregar Arista", "Ingrese el nodo origen:", parent=self.root)
-            self.root.update()  # Actualizar la ventana
-            destino = simpledialog.askstring("Agregar Arista", "Ingrese el nodo destino:", parent=self.root)
-            self.root.update()  # Actualizar la ventana
-            peso = simpledialog.askfloat("Agregar Arista", "Ingrese el peso de la arista:", parent=self.root)
-
-            if origen in self.G.nodes and destino in self.G.nodes and peso:
-                if origen == destino:
-                    messagebox.showerror("Error", "No puede haber una ruta a si mismo.")
-                    return
-                if peso >= 0:
-                    self.G.add_edge(origen, destino, weight=peso)
-                    self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
-                else:
-                    messagebox.showerror("Error", "El peso debe ser válido (0-Inf).")
+        origen = simpledialog.askstring("Agregar Ruta", "Ingrese la zona origen:", parent=self.root)
+        self.root.update()  # Actualizar la ventana
+        destino = simpledialog.askstring("Agregar Ruta", "Ingrese la zona destino:", parent=self.root)
+        self.root.update()  # Actualizar la ventana
+        peso = simpledialog.askfloat("Agregar Ruta", "Ingrese la distancia en km:", parent=self.root)
+        if origen in self.G.nodes and destino in self.G.nodes and peso:
+            if origen == destino:
+                messagebox.showerror("Error", "No puede haber una ruta a si mismo.")
+                return
+            if peso >= 0:
+                self.G.add_edge(origen, destino, weight=peso)
+                self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
             else:
-                messagebox.showerror("Error", "Los nodos deben existir y el peso debe ser válido (0-Inf).")
+                messagebox.showerror("Error", "La distancia debe ser válida (0-Inf).")
         else:
-            messagebox.showerror(message="Actualmente solo esta visualizando el árbol generado.")
+            messagebox.showerror("Error", "Las zonas deben existir y la distancia debe ser válida (0-Inf).")
     
     def generar_posiciones_arbol(self,G: nx.Graph, root):
-        niveles = {}  # Diccionario para almacenar niveles de cada nodo
+        niveles = {}  # Diccionario para almacenar niveles de cada zona
         posiciones = {}  # Diccionario de posiciones finales
         visitados = set()  # Para evitar ciclos
 
         # Obtener estructura de árbol (suponiendo que G es un árbol o un MST)
         arbol = nx.bfs_tree(G, root)  # Usa búsqueda en anchura (BFS) para formar un árbol desde root
 
-        def dfs(nodo, nivel=0, x=0, ancho=1):
-            if nodo in visitados:
+        def dfs(zona, nivel=0, x=0, ancho=1):
+            if zona in visitados:
                 return
-            visitados.add(nodo)
-            niveles[nodo] = nivel
-            posiciones[nodo] = (x, -nivel)  # -nivel para que crezca hacia abajo
+            visitados.add(zona)
+            niveles[zona] = nivel
+            posiciones[zona] = (x, -nivel)  # -nivel para que crezca hacia abajo
 
-            hijos = list(arbol[nodo])  # Solo tomamos los hijos en el árbol BFS
+            hijos = list(arbol[zona])  # Solo tomamos los hijos en el árbol BFS
             num_hijos = len(hijos)
 
             for i, hijo in enumerate(hijos):
@@ -533,60 +675,151 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
         """
         Encuentra la zona contaminada más cercana con un árbol de expansion (bfs).
         """
-        origen = simpledialog.askstring("BFS", "Ingrese el nodo origen:", parent=self.root)
+        origen = simpledialog.askstring("BFS", "Ingrese la zona origen:", parent=self.root)
         self.root.update()  # Actualizar la ventana
         if origen in self.G.nodes:
             arbol = bfs_amplitud(self.G,origen) # generar arbol bfs
-            distancia, nodo, ruta = encontrar_mas_cercano_con_ruta(arbol,origen,self.contaminadas)
+            distancia, zona, ruta = encontrar_mas_cercano_con_ruta(arbol,origen,self.contaminadas)
             if distancia > -1:
                 self.resaltado = ruta
-                messagebox.showinfo("Resultado", f"El nodo más cercano a {origen} es {nodo}, se encuentra a {distancia} nodo(s) de distancia.")
+                messagebox.showinfo("Resultado", f"La zona más cercana a {origen} es {zona}, se encuentra a {distancia} zona(s) de distancia.")
                 self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
-                self.roadmap.add('A11') # marcar como hecho
             else:
-                messagebox.showwarning("Atención", f"No se encontro ningún nodo cercano a {origen}")
+                messagebox.showwarning("Atención", f"No se encontro ningúna zona cercana a {origen}")
         else:
-            messagebox.showerror("Error", "El nodo debe existir.")
+            messagebox.showerror("Error", "La zona debe existir.")
     
-    def volver(self, id):
+    def dfs(self):
         """
-        Reiniciar la vista al volver.
+        Encuentra el arbol de expansión a profundidad por medio de dfs.
         """
-        self.mostrarActividad(id)
-        self.resaltado = []            
-        self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
-    
-    def volverGraficos(self,id):
-        """
-        Reinicia la vista al volver, reinicia tambien la vista de gráficos.
-        """
-        pass
+        origen = simpledialog.askstring("DFS", "Ingrese la zona origen:", parent=self.root)
+        self.root.update()  # Actualizar la ventana
+        if origen in self.G.nodes:
+            arbol = nx.Graph()
+            aristas_con_pesos = dfs_profundidad(self.G,origen) # generar arbol dfs
+            for (u, v, peso) in aristas_con_pesos:
+                arbol.add_edge(u, v, weight=peso)  # Añade la arista con su peso
+            distancia, zona, ruta = encontrar_mas_lejano_con_ruta(arbol,origen,self.contaminadas)
+            print(ruta)
+            if distancia > -1:
+                self.resaltado = ruta
+                messagebox.showinfo("Resultado", f"La zona más lejana a {origen} es {zona}, se encuentra a {distancia} zona(s) de distancia.")
 
-    def dibujar_grafo(self,G,ax,canvas,pos,resaltado,contaminadas, optColor:str="#ff5353", optColor2: str="#ff5353"):
+            self.dividirPantalla(arbol,origen,3,7, layout='spring')
+        else:
+            messagebox.showerror("Error", "La zona debe existir.")
+
+    def dijkstra(self):
+        origen = simpledialog.askstring("Dijkstra", "Ingrese alguna zona de recolección (en dorado):", parent=self.root)
+        self.root.update()  # Actualizar la ventana
+        if origen in list(self.zonasReciclaje):
+            D, P, ruta = dijkstraFunc(self.G, origen, )
+            distancia, zona, ruta = encontrar_mas_cercano_con_ruta(arbol,origen,self.contaminadas)
+            if distancia > -1:
+                self.resaltado = ruta
+                messagebox.showinfo("Resultado", f"La zona más cercana a {origen} es {zona}, se encuentra a {distancia} zona(s) de distancia.")
+                self.dibujar_grafo(self.G,self.ax,self.canvas,self.pos,self.resaltado,self.contaminadas)
+            else:
+                messagebox.showwarning("Atención", f"No se encontro ningúna zona cercana a {origen}")
+        else:
+            messagebox.showerror("Error", "La zona debe ser una zona de reciclaje.")
+
+        
+    def dividirPantalla(self, H: nx.DiGraph, origen, ancho: int = 5, alto: int = 7, layout: str = 'tree'):
+        self.fig.set_size_inches(ancho, alto)  # Nuevo tamaño en pulgadas (ancho, alto)
+        self.canvas.draw()  # Esto fuerza el redibujado
+        self.canvas.get_tk_widget().config(width=int(ancho*self.fig.dpi), height=int(7*self.fig.dpi))
+        self.toggle_mostrar_ocultar(self.secondary_graph)
+        self.H = H
+        if layout == 'tree':
+            self.secondary_pos = self.generar_posiciones_arbol(self.H,origen)
+        else:
+            self.secondary_pos = nx.spring_layout(self.H, scale=1, k=3/sqrt(self.H.number_of_nodes()))
+            
+        self.dibujar_grafo(self.H,self.secondary_ax,self.secondary_canvas,self.secondary_pos,self.resaltado,self.contaminadas)
+
+    def prim(self):
+        # 1. Cambiar el tamaño de la figura
+        self.fig.set_size_inches(5, 7)  # Nuevo tamaño en pulgadas (ancho, alto)
+
+        # 3. Actualizar el canvas
+        self.canvas.draw()  # Esto fuerza el redibujado
+
+        # 4. Reconfigurar el widget en Tkinter 
+        self.canvas.get_tk_widget().config(width=int(5*self.fig.dpi), height=int(7*self.fig.dpi))
+        self.toggle_mostrar_ocultar(self.secondary_graph)
+        self.H = self.G
+        self.secondary_pos = self.generar_posiciones_arbol(self.H,'A')
+        self.dibujar_grafo(self.H,self.secondary_ax,self.secondary_canvas,self.secondary_pos,self.resaltado,self.contaminadas)
+
+        
+    def reiniciarGraficos(self):
+        """
+        Reinicia la vista de gráficos.
+        
+        """
+        self.fig.set_size_inches(10, 7)  # Nuevo tamaño en pulgadas (ancho, alto)
+        self.canvas.draw()  # Esto fuerza el redibujado
+        self.canvas.get_tk_widget().config(width=int(10*self.fig.dpi), height=int(7*self.fig.dpi))
+        self.toggle_mostrar_ocultar(self.secondary_graph)
+        self.H =  None
+        self.secondary_pos = {}
+        self.secondary_ax.clear()
+        self.secondary_canvas.draw()
+
+    def dibujar_grafo(self, G, ax, canvas, pos, resaltado, contaminadas, optColor: str = "#ff5353", optColor2: str = "#ff5353", resaltado2: list = None):
         """
         Dibuja el grafo en la interfaz gráfica, resaltando aristas y nodos si se proveen.
+        Además, permite resaltar un segundo conjunto de nodos y optimiza los procesos de dibujo.
+
+        Args:
+            G: Grafo.
+            ax: Eje donde se dibuja el grafo.
+            canvas: Lienzo para el dibujo.
+            pos: Posiciones de los nodos.
+            resaltado: Lista de aristas a resaltar.
+            contaminadas: Lista de nodos a resaltar como contaminadas.
+            optColor: Color para los nodos resaltados (por defecto rojo).
+            optColor2: Color para el segundo conjunto de nodos resaltados.
+            resaltado2: Lista de nodos a resaltar (opcional, segundo conjunto de nodos).
         """
         ax.clear()
-        if len(contaminadas) > 0: #reduciendo procesos
-            nodes_diff = set(G.nodes) - contaminadas
-            nx.draw_networkx_nodes(G, pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff, ax=ax) # no resaltados
-            nx.draw_networkx_nodes(G, pos, node_size=500, node_color=optColor2, nodelist=contaminadas,ax=ax) # resaltados
-        else:
-            nx.draw_networkx_nodes(G, pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff,ax=ax) # no resaltados
-        nx.draw_networkx_labels(G, pos, font_size=10, font_family="Montserrat", font_color='#ffffff', font_weight='bold',ax=ax) #labels de nodo
 
-        if len(resaltado) > 0:
+        # Optimización: Procesar nodos no contaminados y contaminados solo una vez
+        if contaminadas:
+            nodes_diff = set(G.nodes) - contaminadas
+            nx.draw_networkx_nodes(G, pos, node_size=400, node_color='#17d50c', nodelist=nodes_diff, ax=ax)  # No resaltados
+            nx.draw_networkx_nodes(G, pos, node_size=500, node_color=optColor2, nodelist=contaminadas, ax=ax)  # Resaltados
+        else:
+            nx.draw_networkx_nodes(G, pos, node_size=400, node_color='#17d50c', nodelist=set(G.nodes), ax=ax)  # No resaltados
+
+        # Resaltar el segundo conjunto de nodos si se proporciona
+        if resaltado2:
+            nx.draw_networkx_nodes(G, pos, node_size=500, node_color=optColor, nodelist=resaltado2, ax=ax)  # Segundo resaltado
+
+        # Dibujar las etiquetas de los nodos
+        nx.draw_networkx_labels(G, pos, font_size=10, font_family="Montserrat", font_color='#ffffff', font_weight='bold', ax=ax)
+
+        # Dibujar aristas
+        if resaltado:
             edges_diff = set(G.edges) - set(resaltado)
             edge_labels_diff = {edge: G[edge[0]][edge[1]]["weight"] for edge in edges_diff}
-            edge_labels = {edge: G[edge[0]][edge[1]]["weight"] for edge in resaltado if edge in G.edges}
-            nx.draw_networkx_edges(G, pos, edgelist=edges_diff, width=3, edge_color='#ffffff',ax=ax)
-            nx.draw_networkx_edge_labels(G, pos, edge_labels_diff, font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6},ax=ax)
-            nx.draw_networkx_edges(G, pos, edgelist=resaltado, edge_color=optColor, width=3)
-            nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=10, font_color=optColor, font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.8},ax=ax)
-        else:
-            nx.draw_networkx_edges(G, pos, width=3, edge_color='#ffffff',ax=ax)
-            nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): d['weight'] for u, v, d in G.edges(data=True)} , font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6},ax=ax)
+            edge_labels = {edge: G[edge[0]][edge[1]]["weight"] for edge in resaltado}
 
+            # Dibujar las aristas no resaltadas
+            nx.draw_networkx_edges(G, pos, edgelist=edges_diff, width=3, edge_color='#ffffff', ax=ax)
+            nx.draw_networkx_edge_labels(G, pos, edge_labels_diff, font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6}, ax=ax)
+
+            # Dibujar las aristas resaltadas
+            nx.draw_networkx_edges(G, pos, edgelist=resaltado, edge_color=optColor, width=3, ax=ax)
+            nx.draw_networkx_edge_labels(G, pos, edge_labels, font_size=10, font_color=optColor, font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.8}, ax=ax)
+        else:
+            # Dibujar todas las aristas si no se resalta ninguna
+            nx.draw_networkx_edges(G, pos, width=3, edge_color='#ffffff', ax=ax)
+            nx.draw_networkx_edge_labels(G, pos, edge_labels={(u, v): d['weight'] for u, v, d in G.edges(data=True)}, font_size=10, font_color='#353535', font_family="Montserrat", font_weight='bold', bbox={"boxstyle": "round", "ec": (1.0, 1.0, 1.0), "fc": (1.0, 1.0, 1.0), "alpha": 0.6}, ax=ax)
+
+        # Actualizar el lienzo
         canvas.draw()
 
     def on_press(self, event, pos_ref, dragging_attr):
@@ -601,12 +834,12 @@ cercano a la cantidad mínima () necesaria para conectar todas las zonas (V−1)
         """Maneja el evento de soltar el mouse"""
         setattr(self, dragging_attr, None)  # Resetear el estado de arrastre
     
-    def on_motion(self, event, pos_ref, dragging_attr, G, ax, canvas, resaltado, contaminadas):
-        """Maneja el arrastre de nodos"""
+    def on_motion(self, event, pos_ref, dragging_attr, G, ax, canvas, resaltado, contaminadas, reciclaje):
+        """Maneja el arrastre de zonas"""
         dragging = getattr(self, dragging_attr)
         if dragging and event.inaxes == ax and event.xdata is not None and event.ydata is not None:
             pos_ref[dragging] = (event.xdata, event.ydata)
-            self.dibujar_grafo(G, ax, canvas, pos_ref, resaltado, contaminadas)
+            self.dibujar_grafo(G, ax, canvas, pos_ref, resaltado, contaminadas, optColor2='#e59b06', resaltado2=reciclaje)
                     
 root = ttk.Window(themename="dstheme") 
 
