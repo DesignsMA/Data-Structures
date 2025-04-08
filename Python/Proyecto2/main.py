@@ -5,14 +5,13 @@ import networkx as nx
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import os
-from datetime import datetime
 from math import sqrt
 from PIL import Image, ImageTk
 import random
 import numpy as np
 from Resources import dstheme
 from Scripts import *
-dstheme.__main__()
+
 # Ruta base (ej: "C:/grafo/")
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 class GuardianesBosque:
@@ -1154,8 +1153,12 @@ Bosque Disperso: Cuando E ≈ V-1 (solo conexiones esenciales)""",
             pos_ref[dragging] = (event.xdata, event.ydata)
             self.dibujar_grafo(G, ax, canvas, pos_ref, resaltado, contaminadas, optColor2='#e59b06', resaltado2=reciclaje)
                     
-root = ttk.Window(themename="dstheme") 
-
+theme = dstheme.apply_custom_theme()                  
+root = ttk.Window() 
+# Initialize the style, register, and apply the custom theme
+style = ttk.Style()
+style.register_theme(theme)  # Register the theme
+style.theme_use(theme.name)  # Apply the custom theme
 app = GuardianesBosque(root)
 root.title("Guardianes del Bosque")
 
