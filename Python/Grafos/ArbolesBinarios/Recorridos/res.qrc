@@ -1,0 +1,7 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+    <qresource prefix="/">
+        <file>styles/main.css</file>
+        <file>fonts/redhat.ttf</file>
+    </qresource>
+</RCC>
