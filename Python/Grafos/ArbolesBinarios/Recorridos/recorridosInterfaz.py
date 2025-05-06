@@ -7,8 +7,9 @@ from PySide6.QtGui import QFontDatabase, QColor
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEngineSettings
 import res_rc
-from dash import Dash, html
+from dash import Dash, html, Input, Output
 import dash_cytoscape as cyto
+import dash_bootstrap_components as dcc
 
 os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = ("--disable-gpu ")
 
@@ -106,7 +107,7 @@ class MainWindow(QMainWindow):
 
 class DashApp:
     def __init__(self):
-        self.app = Dash(__name__)
+        self.app = Dash(__name__, prevent_initial_callbacks=True)
         self.setup_layout()
 
     def setup_layout(self):
@@ -138,10 +139,38 @@ class DashApp:
                 id='cytoscape',
                 elements=elements,
                 layout={'name': 'preset', 'animate': True},
-                style={'width': '100%', 'height': '95vh'},
+                style={'width': '100vw-200px', 'height': '95vh'},
                 stylesheet=default_stylesheet
+            ),
+            dcc.Row(
+                id='controlPanel',
+                align='center',
+                class_name='editor',
+                label="Editar Grafo",
+                children=
+                [
+                    html.Button("Insertar nodo", id='btn1'),
+                    html.Button("Eliminar nodo", id='btn2'),
+                    html.Button("Intercambiar nodos", id='btn3'),
+                    html.Div(id='log')
+                ]
             )
         ])
+
+        self.app.clientside_callback(
+            """
+            function(){
+                console.log(dash_clientside.callback_context);
+                const triggered_id = dash_clientside.callback_context.triggered_id;
+                return "triggered id: " + triggered_id
+            }
+            """,
+            Output("log", "children"),
+            Input("btn1", "n_clicks"),
+            Input("btn2", "n_clicks"),
+            Input("btn3", "n_clicks"),
+        )
+
 
 if __name__ == '__main__':
     

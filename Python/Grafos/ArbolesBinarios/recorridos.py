@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
-
+import json
+import os
+plt.ion()  # Activar modo interactivo
 class Nodo:
     def __init__(self, value=None, parent=None, is_root=False, is_left=False, is_right=False):
         self.value = value
@@ -9,10 +11,14 @@ class Nodo:
         self.is_root = is_root
         self.is_left = is_left
         self.is_right = is_right
+        
+
 
 class BinarySearchTre:
     def __init__(self):
         self.root = None
+        self.fig = None
+        self.ax = None
 
     def empty(self):
         return self.root is None
@@ -36,6 +42,32 @@ class BinarySearchTre:
             else:
                 aux = aux.right
         return temp
+
+    def delete(self, valor):
+        self.root = self._delete_rec(self.root, valor)
+
+    def _delete_rec(self, nodo, valor):
+        if nodo is None:
+            return nodo
+        if valor < nodo.value:
+            nodo.left = self._delete_rec(nodo.left, valor)
+        elif valor > nodo.value:
+            nodo.right = self._delete_rec(nodo.right, valor)
+        else:
+            if nodo.left is None:
+                return nodo.right
+            elif nodo.right is None:
+                return nodo.left
+            temp = self._min_value_node(nodo.right)
+            nodo.value = temp.value
+            nodo.right = self._delete_rec(nodo.right, temp.value)
+        return nodo
+
+    def _min_value_node(self, nodo):
+        actual = nodo
+        while actual.left is not None:
+            actual = actual.left
+        return actual
 
     def show_in_order(self, nodo):
         if nodo:
@@ -83,48 +115,127 @@ class BinarySearchTre:
         plt.title("Árbol Binario de Búsqueda")
         plt.show()
 
+    def actualizar_dibujo(self):
+        if self.fig is None or not plt.fignum_exists(self.fig.number):
+            self.fig, self.ax = plt.subplots()
+            self.fig.show()  # Mostrar figura explícitamente
 
-# === MAIN ===
+        else:
+            self.ax.clear()
+
+        self.ax.axis("off")
+
+        def draw_node(nodo, x, y, dx):
+            if nodo is not None:
+                self.ax.text(x, y, str(nodo.value), ha='center', bbox=dict(facecolor='skyblue', boxstyle='circle'))
+                if nodo.left:
+                    self.ax.plot([x, x - dx], [y, y - 1], 'k-')
+                    draw_node(nodo.left, x - dx, y - 1, dx / 2)
+                if nodo.right:
+                    self.ax.plot([x, x + dx], [y, y - 1], 'k-')
+                    draw_node(nodo.right, x + dx, y - 1, dx / 2)
+
+        draw_node(self.root, x=0, y=0, dx=1.5)
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+
+    def cerrar_figura(self):
+        if self.fig and plt.fignum_exists(self.fig.number):
+            plt.close(self.fig)
+            self.fig = None
+            self.ax = None
+
+def menu_edicion(tree):
+    while True:
+        print("\n--- MENÚ DE EDICIÓN ---")
+        print("1. Insertar un elemento")
+        print("2. Eliminar un elemento")
+        print("3. Cargar árbol desde archivo .txt")
+        print("4. Volver al menú principal")
+
+        opcion = input("Elige una opción: ")
+    
+        if opcion == "1":
+            valor = int(input("Valor a insertar: "))
+            tree.add(valor)
+            tree.actualizar_dibujo()
+        elif opcion == "2":
+            valor = int(input("Valor a eliminar: "))
+            tree.delete(valor)
+            tree.actualizar_dibujo()
+        elif opcion == "3":
+            ruta = input("Nombre del archivo txt (ej. arbol.txt): ").strip()
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            ruta_completa = os.path.join(base_dir, ruta)
+            print(ruta_completa)
+            if not os.path.isfile(ruta_completa):
+                print("Archivo no encontrado.")
+                continue
+            try:
+                with open(ruta_completa, 'r') as f:
+                    contenido = f.read()
+                    numeros = [int(x.strip()) for x in contenido.split(',') if x.strip().isdigit()]
+                    if not numeros:
+                        print("No se encontraron números válidos.")
+                        continue
+                    tree.root = None  # Reiniciar el árbol
+                    for num in numeros:
+                        tree.add(num)
+                    tree.actualizar_dibujo()
+            except Exception as e:
+                print(f"Error cargando archivo: {e}")
+        elif opcion == "4":
+            tree.cerrar_figura()
+            break
+        else:
+            print("Opción inválida.")
+
+def menu_recorridos(tree):
+    while True:
+        print("\n--- MENÚ DE RECORRIDOS ---")
+        print("1. In-order")
+        print("2. Pre-order")
+        print("3. Post-order")
+        print("4. Buscar")
+        print("5. Volver al menú principal")
+
+        opcion = input("Elige una opción: ")
+
+        if opcion == "1":
+            tree.show_in_order(tree.root)
+            tree.actualizar_dibujo()
+        elif opcion == "2":
+            tree.show_pre_order(tree.root)
+            tree.actualizar_dibujo()
+        elif opcion == "3":
+            tree.show_pos_order(tree.root)
+            tree.actualizar_dibujo()
+        elif opcion == "4":
+            val = int(input("Valor a buscar: "))
+            nodo = tree.search(tree.root, val)
+            print(f"{val} {'sí' if nodo else 'no'} está en el árbol.")
+        elif opcion == "5":
+            break
+        else:
+            print("Opción inválida.")
 
 tree = BinarySearchTre()
-c = int(input("¿Cuántos números quieres tener en el árbol?: "))
-
-for i in range(c):
-    valor = int(input(f"Ingrese el valor #{i+1}: "))
-    tree.add(valor)
 
 while True:
-    print("\n--- MENÚ ---")
-    print("1. Mostrar recorrido in-order")
-    print("2. Mostrar recorrido pre-order")
-    print("3. Mostrar recorrido post-order")
-    print("4. Buscar un valor")
-    print("5. Salir")
+    print("\n=== MENÚ PRINCIPAL ===")
+    print("1. Editar árbol")
+    print("2. Ver recorridos")
+    print("3. Salir")
 
-    opcion = input("Elige una opción (1-5): ")
+    opcion = input("Selecciona una opción: ")
 
     if opcion == "1":
-        print("\nRecorrido in-order:")
-        tree.show_in_order(tree.root)
-        tree.draw_tree()
+        menu_edicion(tree)
     elif opcion == "2":
-        print("\nRecorrido pre-order:")
-        tree.show_pre_order(tree.root)
-        tree.draw_tree()
+        menu_recorridos(tree)
     elif opcion == "3":
-        print("\nRecorrido post-order:")
-        tree.show_pos_order(tree.root)
-        tree.draw_tree()
-    elif opcion == "4":
-        buscar = int(input("¿Qué valor quieres buscar?: "))
-        nodo = tree.search(tree.root, buscar)
-        if nodo:
-            print(f"El valor {buscar} SÍ está en el árbol.")
-        else:
-            print(f"El valor {buscar} NO está en el árbol.")
-        tree.draw_tree()
-    elif opcion == "5":
-        print("Saliendo del programa...")
+        print("Saliendo...")
+        tree.cerrar_figura()
         break
     else:
-        print("Opción no válida. Intenta de nuevo.")
+        print("Opción inválida.")
