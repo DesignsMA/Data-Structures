@@ -5,9 +5,9 @@ plt.ion()  # Activar modo interactivo
 class Nodo:
     def __init__(self, value=None, parent=None, is_root=False, is_left=False, is_right=False):
         self.value = value
-        self.left = None
-        self.right = None
-        self.parent = parent
+        self.left = None # subarbol izquierdo
+        self.right = None # subarbol derecho
+        self.parent = parent # padre
         self.is_root = is_root
         self.is_left = is_left
         self.is_right = is_right
@@ -28,12 +28,15 @@ class BinarySearchTre:
             self.root = Nodo(value=value, is_root=True)
         else:
             nodo = self.get_place(value)
-            if value <= nodo.value:
+            if value <= nodo.value: # determina en que lado colocarse
                 nodo.left = Nodo(value=value, parent=nodo, is_left=True)
             else:
                 nodo.right = Nodo(value=value, parent=nodo, is_right=True)
 
     def get_place(self, valor):
+        """
+            Encuentra y retorna el nodo donde el valor debera colocarse como hijo.
+        """
         aux = self.root
         while aux is not None:
             temp = aux
