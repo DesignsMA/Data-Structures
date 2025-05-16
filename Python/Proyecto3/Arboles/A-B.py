@@ -1,131 +1,226 @@
-# Python program for B-Tree insertion
-
+import bisect
+import matplotlib.pyplot as plt
 class BTreeNode:
-    def __init__(self, t, leaf):
-        self.keys = [None] * (2 * t - 1) # An array of keys
-        self.t = t # Minimum degree (defines the range for number of keys)
-        self.C = [None] * (2 * t) # An array of child pointers
-        self.n = 0 # Current number of keys
-        self.leaf = leaf # Is true when node is leaf. Otherwise false
+    """B-Tree Node implementation following Knuth's definition"""
+    def __init__(self, m, is_leaf):
+        """
+        Initialize B-Tree node.
 
-    # A utility function to insert a new key in the subtree rooted with
-    # this node. The assumption is, the node must be non-full when this
-    # function is called
-    def insertNonFull(self, k):
-        i = self.n - 1
-        if self.leaf:
-            while i >= 0 and self.keys[i] > k:
-                self.keys[i + 1] = self.keys[i]
-                i -= 1
-            self.keys[i + 1] = k
-            self.n += 1
+        Args:
+            m: Order of the B-Tree (maximum number of children)
+            is_leaf: Boolean indicating if the node is a leaf
+        """
+        self.keys = []          # List to store keys in the node
+        self.m = m              # Order of the B-Tree (max children)
+        self.children = []      # List to store child nodes
+        self.is_leaf = is_leaf  # Whether this node is a leaf
+
+    def is_full(self):
+        """Check if the node has reached maximum capacity (m-1 keys)"""
+        return len(self.keys) == self.m - 1
+
+    def traverse(self, indentation_level):
+        """
+        Traverse the tree and print keys with proper indentation.
+
+        Args:
+            indentation_level: Current level of indentation for visualization
+        """
+        indent = "\t" * indentation_level
+
+        if not self.is_leaf:
+            for i in range(len(self.keys)):
+                # Recursively traverse child nodes first
+                self.children[i].traverse(indentation_level + 1)
+                print(indent + str(self.keys[i]))
+
+            # Traverse the rightmost child node
+            self.children[-1].traverse(indentation_level + 1)
         else:
-            while i >= 0 and self.keys[i] > k:
-                i -= 1
-            if self.C[i + 1].n == 2 * self.t - 1:
-                self.splitChild(i + 1, self.C[i + 1])
-                if self.keys[i + 1] < k:
-                    i += 1
-            self.C[i + 1].insertNonFull(k)
+            # Print keys for leaf nodes
+            for key in self.keys:
+                print(indent + str(key))
 
-    # A utility function to split the child y of this node. i is index of y in
-    # child array C[].  The Child y must be full when this function is called
-    def splitChild(self, i, y):
-        z = BTreeNode(y.t, y.leaf)
-        z.n = self.t - 1
-        for j in range(self.t - 1):
-            z.keys[j] = y.keys[j + self.t]
-        if not y.leaf:
-            for j in range(self.t):
-                z.C[j] = y.C[j + self.t]
-        y.n = self.t - 1
-        for j in range(self.n, i, -1):
-            self.C[j + 1] = self.C[j]
-        self.C[i + 1] = z
-        for j in range(self.n - 1, i - 1, -1):
-            self.keys[j + 1] = self.keys[j]
-        self.keys[i] = y.keys[self.t - 1]
-        self.n += 1
+    def split(self):
+        """
+        Split the node when it's full.
 
-    # A function to traverse all nodes in a subtree rooted with this node
-    def traverse(self):
-        for i in range(self.n):
-            if not self.leaf:
-                self.C[i].traverse()
-            print(self.keys[i], end=' ')
-        if not self.leaf:
-            self.C[i + 1].traverse()
+        Returns:
+            tuple: (median_key, new_right_node)
+        """
+        median_index = (self.m - 1) // 2
+        median_key = self.keys[median_index]
 
-            
-    # A function to search a key in the subtree rooted with this node.
-    def search(self, k):
-        i = 0
-        while i < self.n and k > self.keys[i]:
-            i += 1
-        if i < self.n and k == self.keys[i]:
-            return self
-        if self.leaf:
-            return None
-        return self.C[i].search(k)
+        # Create new right node
+        new_right_node = BTreeNode(self.m, self.is_leaf)
 
-# A BTree
+        # Split keys (keys after median go to new node)
+        new_right_node.keys = self.keys[median_index + 1:]
+        self.keys = self.keys[:median_index]
+
+        if not self.is_leaf:
+            # Split children (children after median go to new node)
+            new_right_node.children = self.children[median_index + 1:]
+            self.children = self.children[:median_index + 1]
+
+        return median_key, new_right_node
+
+    def insert(self, new_key):
+        """
+        Insert a new key into the subtree rooted at this node.
+
+        Args:
+            new_key: Key to be inserted
+
+        Returns:
+            tuple: (median_key, new_right_node) if node was split, None otherwise
+        """
+        new_child_node = None
+
+        if not self.is_leaf:
+            # Find the appropriate child for insertion
+            insert_pos = bisect.bisect_left(self.keys, new_key)
+
+            # Recursively insert into the child node
+            new_child_node = self.children[insert_pos].insert(new_key)
+
+            if new_child_node is not None:
+                # Child was split, we need to incorporate the median key
+                if not self.is_full():
+                    # Insert median key and new child pointer
+                    self.keys.insert(insert_pos, new_child_node[0])
+                    self.children.insert(insert_pos + 1, new_child_node[1])
+                    new_child_node = None
+                else:
+                    # Current node is full, need to split after insertion
+                    self.keys.insert(insert_pos, new_child_node[0])
+                    self.children.insert(insert_pos + 1, new_child_node[1])
+                    median_key, new_right_node = self.split()
+                    return (median_key, new_right_node)
+        else:
+            # Insert into leaf node
+            insert_pos = bisect.bisect_left(self.keys, new_key)
+            self.keys.insert(insert_pos, new_key)
+
+            # Check if leaf needs to be split
+            if len(self.keys) == self.m:
+                return self.split()
+
+        return new_child_node
+
+    def create_new_root(self, median_key, new_right_node):
+        """
+        Create a new root when the current root splits.
+
+        Args:
+            median_key: The key that will be promoted to the new root
+            new_right_node: The new right child node
+
+        Returns:
+            BTreeNode: The new root node
+        """
+        new_root = BTreeNode(self.m, False)
+        new_root.keys.append(median_key)
+        new_root.children.append(self)  # Original node becomes left child
+        new_root.children.append(new_right_node)
+        return new_root
+
 class BTree:
-    def __init__(self, t):
-        self.root = None # Pointer to root node
-        self.t = t  # Minimum degree
+    """B-Tree implementation following Knuth's definition"""
+    def __init__(self, m):
+        """
+        Initialize B-Tree.
 
-    # function to traverse the tree
-    def traverse(self):
-        if self.root != None:
-            self.root.traverse()
+        Args:
+            m: Order of the B-Tree (maximum number of children)
+        """
+        self.root = BTreeNode(m, True)
+        self.m = m  # Order of the B-Tree (max children)
+        self.fig = None
+        self.ax = None
 
-    # function to search a key in this tree
-    def search(self, k):
-        return None if self.root == None else self.root.search(k)
+    def insert(self, key):
+        """
+        Insert a key into the B-Tree.
 
-    # The main function that inserts a new key in this B-Tree
-    def insert(self, k):
-        if self.root == None:
-            self.root = BTreeNode(self.t, True)
-            self.root.keys[0] = k # Insert key
-            self.root.n = 1
+        Args:
+            key: Key to be inserted
+        """
+        split_result = self.root.insert(key)
+
+        if split_result is not None:
+            # Root was split, create a new root
+            median_key, new_right_node = split_result
+            self.root = self.root.create_new_root(median_key, new_right_node)
+
+    def draw_tree(self):
+        """Dibuja el árbol usando matplotlib."""
+        self._setup_plot()
+        self._draw_node(self.root, x=0, y=0, dx=1.5)
+        plt.title("Árbol Binario de Búsqueda")
+        plt.show()
+
+    def update_drawing(self):
+        """Actualiza el dibujo del árbol."""
+        if self.fig is None or not plt.fignum_exists(self.fig.number):
+            self._setup_plot()
         else:
-            if self.root.n == 2 * self.t - 1:
-                s = BTreeNode(self.t, False)
-                s.C[0] = self.root
-                s.splitChild(0, self.root)
-                i = 0
-                if s.keys[0] < k:
-                    i += 1
-                s.C[i].insertNonFull(k)
-                self.root = s
-            else:
-                self.root.insertNonFull(k)
-                
-# Driver program to test above functions
-if __name__ == '__main__':
-    t = BTree(3) # A B-Tree with minimum degree 3
-    t.insert(10)
-    t.insert(20)
-    t.insert(5)
-    t.insert(6)
-    t.insert(12)
-    t.insert(30)
-    t.insert(7)
-    t.insert(17)
+            self.ax.clear()
+            self.ax.axis("off")
 
-    print("Traversal of the constructed tree is ", end = ' ')
-    t.traverse()
-    print()
+        self._draw_node(self.root, x=0, y=0, dx=1.5)
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
 
-    k = 6
-    if t.search(k) != None:
-        print("Present")
-    else:
-        print("Not Present")
+    def _setup_plot(self):
+        """Configura la figura de matplotlib."""
+        self.fig, self.ax = plt.subplots(figsize=(10, 8))
+        self.ax.set_xlim(-10, 10)
+        self.ax.set_ylim(-10, 1)
+        self.ax.axis('off')
+        self.fig.show()
 
-    k = 15
-    if t.search(k) != None:
-        print("Present")
-    else:
-        print("Not Present")
+    def _draw_node(self, node: BTreeNode, x: float, y: float, dx: float):
+        """Dibuja un nodo del B-Tree y sus conexiones con los hijos.
+
+        Args:
+            node: Nodo actual a dibujar
+            x: Posición horizontal del nodo
+            y: Posición vertical del nodo
+            dx: Espaciado horizontal entre nodos hijos
+        """
+        if node is not None:
+            # Dibuja el rectángulo del nodo con sus claves
+            self.ax.text(x, y, str(node.keys), ha='center', va='center',
+                       bbox=dict(facecolor='skyblue', boxstyle='round,pad=0.5'))
+
+            if not node.is_leaf:
+                # Calcula las posiciones de los hijos
+                num_children = len(node.children)
+                total_width = dx * (num_children - 1)
+                start_x = x - total_width / 2
+
+                # Dibuja las conexiones a cada hijo
+                for i, child in enumerate(node.children):
+                    child_x = start_x + i * dx
+                    # Dibuja línea de conexión
+                    self.ax.plot([x, child_x], [y-0.1, y-0.9], 'k-', lw=1)
+                    # Dibuja el hijo recursivamente
+                    self._draw_node(child, child_x, y-1, dx/2)
+
+    def close_figure(self):
+        """Cierra la figura de matplotlib."""
+        if self.fig and plt.fignum_exists(self.fig.number):
+            plt.close(self.fig)
+            self.fig = None
+            self.ax = None
+
+
+print("Creating B-Tree of order 3 (minimum degree 2)")
+btree = BTree(6)
+for x in [10, 30, 0, 20, 5, 25, 2, 16, 8, 12, 5, 32, 4, 36, 17, 6, 22, 28, 14, 35, 15]:
+    btree.insert(x)
+    print(f"Inserting: {x}.")
+    btree.update_drawing()
+    input()
+    
