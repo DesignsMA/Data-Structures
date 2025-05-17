@@ -146,7 +146,6 @@ class DashApp:
                 id='controlPanel',
                 align='center',
                 class_name='editor',
-                label="Editar Grafo",
                 children=
                 [
                     html.Button("Insertar nodo", id='btn1'),
