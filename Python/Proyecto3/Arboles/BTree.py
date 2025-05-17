@@ -1,5 +1,4 @@
 import bisect
-import matplotlib.pyplot as plt
 
 class BTreeNode:
     """Nodo de Árbol-B acuerdo a la definición de Knuth """
@@ -249,8 +248,6 @@ class BTree:
         """
         self.root = BTreeNode(m, True)
         self.m = m  # Order of the B-Tree (max children)
-        self.fig = None
-        self.ax = None
 
     def insert(self, key):
         """
@@ -282,74 +279,6 @@ class BTree:
                 # la raiz tiene un hijo solamente
                 self.root = self.root.children[0]
 
-        
-
-    def draw_tree(self):
-        """Dibuja el árbol usando matplotlib."""
-        self._setup_plot()
-        self._draw_node(self.root, x=0, y=0, dx=1.5)
-        plt.title("Árbol Binario de Búsqueda")
-        plt.show()
-
-    def update_drawing(self):
-        """Actualiza el dibujo del árbol."""
-        if self.fig is None or not plt.fignum_exists(self.fig.number):
-            self._setup_plot()
-        else:
-            self.ax.clear()
-            self.ax.axis("off")
-
-        self._draw_node(self.root, x=0, y=0, dx=1.5)
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-
-    def _setup_plot(self):
-        """Configura la figura de matplotlib."""
-        self.fig, self.ax = plt.subplots(figsize=(10, 8))
-        self.ax.set_xlim(-10, 10)
-        self.ax.set_ylim(-10, 1)
-        self.ax.axis('off')
-        self.fig.show()
-
-    def _draw_node(self, node: BTreeNode, x: float, y: float, dx: float):
-        """Dibuja un nodo del B-Tree y sus conexiones con los hijos."""
-        if node is not None:
-            # Dibuja el rectángulo del nodo
-            self.ax.text(x, y, str(node.keys), 
-                        ha='center', va='center',
-                        bbox=dict(facecolor='skyblue', boxstyle='round,pad=0.5'))
-
-            if not node.is_leaf:
-                # Calcula posiciones de los hijos
-                num_children = len(node.children)
-                total_width = min(num_children * dx, 15)  # Limita el ancho máximo
-                start_x = x - total_width/2
-
-                # Calcula el ancho por clave
-                key_spacing = total_width / (len(node.keys) + 4)
-
-                for i, child in enumerate(node.children):
-                    child_x = start_x + i * (total_width / (num_children - 1)) if num_children > 1 else x
-
-                    # Calcula posición de origen de la línea (centrada entre claves)
-                    if i == 0:
-                        line_x = x - (len(node.keys) * key_spacing)/2
-                    else:
-                        line_x = x - (len(node.keys) * key_spacing)/2 + i * key_spacing
-
-                    # Dibuja línea de conexión
-                    self.ax.plot([line_x, child_x], [y-0.1, y-0.9], 'k-', lw=1)
-
-                    # Dibuja hijo recursivamente
-                    self._draw_node(child, child_x, y-1, dx/2)
-
-    def close_figure(self):
-        """Cierra la figura de matplotlib."""
-        if self.fig and plt.fignum_exists(self.fig.number):
-            plt.close(self.fig)
-            self.fig = None
-            self.ax = None
-    
     def traverse_in_order(self, node):
         """Recorrido in-order del árbol."""
         if node:

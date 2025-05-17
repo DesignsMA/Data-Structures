@@ -1,83 +1,97 @@
 import sys
-from PySide6.QtWidgets import (QWidget, QPushButton, QApplication, QVBoxLayout, 
-                              QHBoxLayout, QMainWindow, QInputDialog)
-from PySide6.QtCore import Qt
-import pyqtgraph as pg
+import json
+import os
+import tempfile
+from PySide6.QtWidgets import (QWidget, QPushButton, QApplication,
+QVBoxLayout, QHBoxLayout, QLabel, QMainWindow, QInputDialog, QSizePolicy)
+from PySide6.QtCore import Slot, Qt, QUrl, QFile, QIODevice, QIODevice, QTextStream
+from PySide6.QtGui import QFontDatabase, QColor
 import numpy as np
-from pyqtgraph.Qt import QtCore, QtGui
+import res_rc
+from Arboles import *
+from treeVisualizer import *
 
+os.environ["QTWEBENGINE_CHROMIUM_FLAGS"] = ("--disable-gpu ")
+
+def load_font_from_resource():
+    # Cargar fuente desde recursos
+    font_file = QFile(":/fonts/redhat.ttf")
+    if not font_file.open(QIODevice.ReadOnly):
+        print("Error al abrir el archivo de fuente")
+        return False
+    
+    font_data = font_file.readAll()
+    font_file.close()
+    
+    font_id = QFontDatabase.addApplicationFontFromData(font_data)
+    return font_id != -1
+                        
 class MainWindow(QMainWindow):
-    def __init__(self, title: str = 'Visualizador Simple', w: int = 800, h: int = 600):
+    def __init__(self, title: str = ' ', w: int = 600, h: int = 300):
         super().__init__()
+        load_font_from_resource()
         self.setWindowTitle(title)
         self.setMinimumSize(w, h)
+        self.showMaximized()
         
         # Widget central
         central_widget = QWidget()
         central_widget.setObjectName("Main")
         self.setCentralWidget(central_widget)
     
-        self.main_layout = QHBoxLayout(central_widget)
+        self.main_layout = QHBoxLayout(central_widget)  # Set parent here
         
-        # Panel de menú
         self.menu = QWidget()
         self.menu.setLayout(QVBoxLayout())
+        self.graph = QWidget()
+        self.graph.setLayout(QHBoxLayout())
         
-        # Área de gráfico
-        self.graph_widget = pg.GraphicsLayoutWidget()
+        # Add layouts to main layout with stretch factors
+        self.main_layout.addWidget(self.menu, 1)  # Takes 1 part of space
+        self.main_layout.addWidget(self.graph, 4)  # Takes 4 parts of space
         
-        # Configurar layout principal
-        self.main_layout.addWidget(self.menu, 1)
-        self.main_layout.addWidget(self.graph_widget, 4)
-        
-        # Inicializar elementos
         self.init_menu()
-        self.init_graph()
         
-        # Diccionario para almacenar nodos por nombre
-        self.node_dict = {}
-        
+        load_font_from_resource()
+        # Load stylesheet
+        file = QFile(":/styles/main.css")
+        if file.open(QFile.ReadOnly | QFile.Text):
+            stream = QTextStream(file)
+            self.setStyleSheet(stream.readAll())
+            file.close()
+        else:
+            print("Failed to load stylesheet:", file.errorString())
+    
     def init_menu(self):
-        """Inicializa los botones del menú"""
-        self.menu.layout().addStretch()
+        buttons = [
+            ("Añadir elemento", "edit", None),
+            ("Cargar el árbol desde archivo", "load", None),
+            ("Buscar un elemento", "search", None),
+            ("Insertar un elemento", "insert", None),
+            ("Eliminar un elemento", "delete", None),
+            ("Intercambiar un elemento", "exchange", None)
+        ]
         
-        # Botón para añadir nodo
-        add_button = QPushButton("Añadir elemento")
-        add_button.clicked.connect(self.add_node_dialog)
-        self.menu.layout().addWidget(add_button)
+        self.menu.layout().addStretch() # funciona como un resorte, empuja los botones hacia arriba
+
+        for label, btnid, slot in buttons:
+            button = QPushButton(label, self.menu)
+            button.setObjectName(btnid)
+            if slot:
+                button.clicked.connect(slot)
+            self.menu.layout().addWidget(button)
         
-        # Espaciador
-        self.menu.layout().addStretch()
+        self.menu.layout().addStretch() # funciona como un resorte, empuja los botones hacia arriba
+
+        # Inicializar grafo
+        self.tree = AVLTree()
+        self.tree_viz = tree_visualizer_factory(self.graph, self.tree)
+        # inicializar grafo
         
-    def init_graph(self):
-        """Inicializa el área de visualización"""
-        self.plot = self.graph_widget.addPlot()
-        self.plot.hideAxis('left')
-        self.plot.hideAxis('bottom')
-        self.plot.setAspectLocked(True)
-        
-        # Elementos gráficos
-        self.scatter = pg.ScatterPlotItem(size=20, brush=pg.mkBrush(70, 130, 180))
-        self.plot.addItem(self.scatter)
-        
-        # Líneas de conexión
-        self.lines = []
-        
-        # Datos de nodos
-        self.node_data = {'pos': [], 'name': []}
-        self.node_dict = {}
-        
-        # Ejemplo inicial
-        self.add_demo_nodes()
-        
-    def add_demo_nodes(self):
-        """Añade algunos nodos de demostración"""
-        self.add_node("A", 0, 0)
-        self.add_node("B", 50, 50)
-        self.add_node("C", -50, 50)
-        self.add_edge("A", "B")
-        self.add_edge("A", "C")
-        
+        for x in [10,20,30,40,50,11,12,13,14,25,45,56,78]:
+            self.tree.insert(x)
+        self.tree_viz.draw_tree(self.tree)
+    
     def add_node_dialog(self):
         """Diálogo para añadir nuevo nodo"""
         text, ok = QInputDialog.getText(self, 'Añadir nodo', 'Ingrese nombre del nodo:')
@@ -86,46 +100,15 @@ class MainWindow(QMainWindow):
             x = np.random.randint(-100, 100)
             y = np.random.randint(-100, 100)
             self.add_node(text, x, y)
-            
-    def add_node(self, name, x, y):
-        """Añade un nodo al gráfico"""
-        # Registrar nodo
-        self.node_dict[name] = (x, y)
-        self.node_data['pos'].append([x, y])
-        self.node_data['name'].append(name)
         
-        # Actualizar gráfico
-        self.update_graph()
-        
-    def add_edge(self, node1_name, node2_name):
-        """Añade una conexión entre nodos"""
-        if node1_name in self.node_dict and node2_name in self.node_dict:
-            x1, y1 = self.node_dict[node1_name]
-            x2, y2 = self.node_dict[node2_name]
-            
-            line = pg.PlotCurveItem(
-                x=[x1, x2], 
-                y=[y1, y2], 
-                pen=pg.mkPen('w', width=2))
-            
-            self.plot.addItem(line)
-            self.lines.append(line)
-        
-    def update_graph(self):
-        """Actualiza todos los nodos en el gráfico"""
-        if not self.node_data['pos']:
-            return
-            
-        pos = np.array(self.node_data['pos'])
-        self.scatter.setData(
-            x=pos[:, 0], 
-            y=pos[:, 1],
-            size=20,
-            brush=pg.mkBrush(70, 130, 180),
-            data=self.node_data['name'])
+
 
 if __name__ == '__main__':
+    
+    # Create the Qt Application
     app = QApplication(sys.argv)
+    # Create and show the form
     window = MainWindow()
     window.show()
+    # Run the main Qt loop
     sys.exit(app.exec())

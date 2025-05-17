@@ -1,14 +1,12 @@
-import matplotlib.pyplot as plt
-import os
-class Nodo:
-    """Nodo de un árbol AVL (con altura y factor de balance)."""
+class NodoAVL:
+    """NodoAVL de un árbol AVL (con altura y factor de balance)."""
     def __init__(self, value=None, parent=None):
         self.value = value
         self.height = 0      # Altura inicializada en 0 (hoja)
         self.fb = 0          # Factor de balance inicial
         self.left = None     # Subárbol izquierdo
         self.right = None    # Subárbol derecho
-        self.parent = parent # Nodo padre
+        self.parent = parent # NodoAVL padre
 
     def _update_height(self):
         """Actualiza la altura del nodo en función de sus hijos."""
@@ -26,21 +24,19 @@ class AVLTree:
     """Implementación de un árbol binario de búsqueda con visualización."""
     def __init__(self):
         self.root = None
-        self.fig = None     # Figura de matplotlib para visualización
-        self.ax = None      # Ejes de matplotlib
 
     def empty(self):
         """Verifica si el árbol está vacío."""
         return self.root is None
 
-    def add(self, value):
+    def insert(self, value):
         """Añade un nuevo valor al árbol."""
         new_node = None
         if self.empty():
-            self.root = Nodo(value)
+            self.root = NodoAVL(value)
         else:
             parent = self._find_parent(value)
-            new_node = Nodo(value, parent)
+            new_node = NodoAVL(value, parent)
             if value <= parent.value:
                 parent.left = new_node
             else:
@@ -48,7 +44,7 @@ class AVLTree:
         
         self._balance_tree(new_node)
         
-    def _balance_tree(self, node: Nodo):
+    def _balance_tree(self, node: NodoAVL):
         "Balancea el ABB mediante rotaciones."
         # ejecuta tras insertar un nodo
         pivot = None # apunta a pivote
@@ -68,7 +64,7 @@ class AVLTree:
             
         # si no existe el pivote solo se actualizan los fb de los ancestros del nodo
     
-    def _rotate(self, p2: Nodo, new_node: Nodo):
+    def _rotate(self, p2: NodoAVL, new_node: NodoAVL):
         """Realiza rotaciones simples o dobles para balancear el árbol AVL."""
         # Identificar los nodos clave
         p1 = p2.parent  # Padre del pivote (puede ser None si p2 es la raíz)
@@ -91,7 +87,7 @@ class AVLTree:
         else:
             self._double_rotation(p1, p2, p3, p4, new_node)
 
-    def _simple_rotation(self, p1: Nodo, p2: Nodo, p3: Nodo, new_node: Nodo):
+    def _simple_rotation(self, p1: NodoAVL, p2: NodoAVL, p3: NodoAVL, new_node: NodoAVL):
         """Realiza una rotación simple (LL o RR)."""
         # Determinar tipo de rotación
         if p2.fb == 2:  # Rotación izquierda (LL)
@@ -125,7 +121,7 @@ class AVLTree:
         p3._update_height()
         p3._update_balance_factor()
     
-    def _double_rotation(self, p1: Nodo, p2: Nodo, p3: Nodo, p4: Nodo, new_node: Nodo):
+    def _double_rotation(self, p1: NodoAVL, p2: NodoAVL, p3: NodoAVL, p4: NodoAVL, new_node: NodoAVL):
         """Realiza una rotación doble (LR o RL)."""
         # Primera rotación (dependiendo del caso)
         if p2.fb == -2:  # Rotación LR
@@ -175,7 +171,7 @@ class AVLTree:
         p4._update_height()
         p4._update_balance_factor()
     
-    def _update_bf_upwards(self, from_node: Nodo, to_node: Nodo):
+    def _update_bf_upwards(self, from_node: NodoAVL, to_node: NodoAVL):
         """Actualiza factores de balance desde un nodo hasta otro (exclusivo)."""
         current = from_node
         while current and current != to_node:
@@ -326,50 +322,6 @@ class AVLTree:
         else:
             return self.search(node.right, value)
 
-    def draw_tree(self):
-        """Dibuja el árbol usando matplotlib."""
-        self._setup_plot()
-        self._draw_node(self.root, x=0, y=0, dx=1.5)
-        plt.title("Árbol Binario de Búsqueda")
-        plt.show()
-
-    def update_drawing(self):
-        """Actualiza el dibujo del árbol."""
-        if self.fig is None or not plt.fignum_exists(self.fig.number):
-            self._setup_plot()
-        else:
-            self.ax.clear()
-            self.ax.axis("off")
-
-        self._draw_node(self.root, x=0, y=0, dx=1.5)
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-
-    def _setup_plot(self):
-        """Configura la figura de matplotlib."""
-        self.fig, self.ax = plt.subplots()
-        self.ax.axis("off")
-        self.fig.show()
-
-    def _draw_node(self, node, x, y, dx):
-        """Función auxiliar para dibujar un nodo y sus hijos."""
-        if node is not None:
-            self.ax.text(x, y, str(node.value), ha='center', 
-                        bbox=dict(facecolor='skyblue', boxstyle='circle'))
-            if node.left:
-                self.ax.plot([x, x - dx], [y, y - 1], 'k-')
-                self._draw_node(node.left, x - dx, y - 1, dx / 2)
-            if node.right:
-                self.ax.plot([x, x + dx], [y, y - 1], 'k-')
-                self._draw_node(node.right, x + dx, y - 1, dx / 2)
-
-    def close_figure(self):
-        """Cierra la figura de matplotlib."""
-        if self.fig and plt.fignum_exists(self.fig.number):
-            plt.close(self.fig)
-            self.fig = None
-            self.ax = None
-
 def edit_menu(tree):
     """Menú para editar el árbol."""
     while True:
@@ -383,7 +335,7 @@ def edit_menu(tree):
     
         if option == "1":
             value = int(input("Valor a insertar: "))
-            tree.add(value)
+            tree.insert(value)
             tree.update_drawing()
         elif option == "2":
             value = int(input("Valor a eliminar: "))
@@ -396,7 +348,7 @@ def edit_menu(tree):
                     numbers = [int(x) for x in f.read().split(',') if x.strip().isdigit()]
                     tree.root = None
                     for num in numbers:
-                        tree.add(num)
+                        tree.insert(num)
                     tree.update_drawing()
             except Exception as e:
                 print(f"Error: {e}")
