@@ -239,7 +239,7 @@ class BTreeNode:
     
 class BTree:
     """B-Tree implementation following Knuth's definition"""
-    def __init__(self, m):
+    def __init__(self, m:int=5):
         """
         Initialize B-Tree.
 
@@ -328,91 +328,3 @@ class BTree:
             # Decide el hijo a explorar
             return self.search(node.children[left], value) if not node.is_leaf else None
 
-
-
-def edit_menu(tree):
-    """Menú para editar el árbol."""
-    while True:
-        print("\n--- MENÚ DE EDICIÓN ---")
-        print("1. Insertar elemento")
-        print("2. Eliminar elemento")
-        print("3. Cargar árbol desde archivo")
-        print("4. Volver al menú principal")
-
-        option = input("Opción: ")
-    
-        if option == "1":
-            value = int(input("Valor a insertar: "))
-            tree.insert(value)
-            tree.update_drawing()
-        elif option == "2":
-            value = int(input("Valor a eliminar: "))
-            tree.delete(value)
-            tree.update_drawing()
-        elif option == "3":
-            filename = input("Nombre del archivo (ej. arbol.txt): ").strip()
-            try:
-                with open(filename, 'r') as f:
-                    numbers = [int(x) for x in f.read().split(',') if x.strip().isdigit()]
-                    tree.root = BTreeNode(5, True)
-                    for num in numbers:
-                        tree.insert(num)
-                    tree.update_drawing()
-            except Exception as e:
-                print(f"Error: {e}")
-        elif option == "4":
-            tree.close_figure()
-            break
-
-
-def traversal_menu(tree):
-    """Menú para recorrer el árbol."""
-    while True:
-        tree.update_drawing()
-        print("\n--- MENÚ DE RECORRIDOS ---")
-        print("1. In-order")
-        print("2. Pre-order")
-        print("3. Post-order")
-        print("4. Buscar valor")
-        print("5. Volver")
-
-        option = input("Opción: ")
-
-        if option == "1":
-            tree.traverse_in_order(tree.root)
-        elif option == "2":
-            tree.traverse_pre_order(tree.root)
-        elif option == "3":
-            tree.traverse_post_order(tree.root)
-        elif option == "4":
-            val = int(input("Valor a buscar: "))
-            node = tree.search(tree.root, val)
-            print(f"Valor {val} {'encontrado' if node else 'no encontrado'}")
-        elif option == "5":
-            break
-
-
-def main():
-    """Función principal del programa."""
-    tree = BTree(5)
-    
-    while True:
-        print("\n=== MENÚ PRINCIPAL ===")
-        print("1. Editar árbol")
-        print("2. Recorridos")
-        print("3. Salir")
-
-        option = input("Opción: ")
-
-        if option == "1":
-            edit_menu(tree)
-        elif option == "2":
-            traversal_menu(tree)
-        elif option == "3":
-            tree.close_figure()
-            print("Saliendo...")
-            break
-
-
-if __name__ == "__main__":
-    main()

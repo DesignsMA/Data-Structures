@@ -1,12 +1,12 @@
-from abc import ABC, abstractmethod
 from PySide6.QtWebEngineWidgets import QWebEngineView
 from PySide6.QtWebEngineCore import QWebEngineSettings
 import networkx as nx
 from pyvis.network import Network
 
-class TreeVisualizerBase(ABC):
+class TreeVisualizer:
     def __init__(self, parent_widget):
         self.tree = None
+        self.tree_type = None  # 'binary' o 'b-tree'
         self.web_view = QWebEngineView(parent_widget)
         
         # Configuración común del viewport
@@ -21,25 +21,76 @@ class TreeVisualizerBase(ABC):
         parent_widget.layout().setSpacing(0)
         parent_widget.layout().addWidget(self.web_view)
     
-    @abstractmethod
+    def set_tree_type(self, tree):
+        """Determina el tipo de árbol basado en sus características"""
+        if hasattr(tree, 'root') and hasattr(tree.root, 'is_leaf'):
+            self.tree_type = 'b-tree'
+        else:
+            self.tree_type = 'binary'
+    
+    def update_tree_type(self, new_tree):
+        """Actualiza el tipo de árbol y recalcula la visualización"""
+        self.set_tree_type(new_tree)
+        self.tree = new_tree
+        self.update()
+    
     def _build_networkx_graph(self, G, node, parent_id=None):
-        """Método abstracto para construir el grafo NetworkX"""
-        pass
+        """Construye el grafo NetworkX según el tipo de árbol"""
+        if node is None:
+            return
+            
+        node_id = id(node)
+        
+        if self.tree_type == 'binary':
+            label = str(node.value)
+            G.add_node(node_id, label=label)
+            
+            if parent_id is not None:
+                G.add_edge(parent_id, node_id)
+            
+            # Recursivamente agregar hijos izquierdo y derecho
+            self._build_networkx_graph(G, node.left, node_id)
+            self._build_networkx_graph(G, node.right, node_id)
+            
+        elif self.tree_type == 'b-tree':
+            label = " | ".join(map(str, node.keys))
+            G.add_node(node_id, label=label)
+            
+            if parent_id is not None:
+                G.add_edge(parent_id, node_id)
+            
+            if not node.is_leaf:
+                for child in node.children:
+                    self._build_networkx_graph(G, child, node_id)
     
     def draw_tree(self, tree):
         """Dibuja el árbol usando NetworkX y PyVis"""
         self.tree = tree
-        if not self.tree or not self.tree.root:
+        self.set_tree_type(tree)
+        
+        if not self.tree or (hasattr(self.tree, 'root') and not self.tree.root):
             return
             
         G = nx.DiGraph()
         self._build_networkx_graph(G, self.tree.root)
-        pos = self._hierarchical_layout(G)
+        
+        # Asegurarnos de que hay nodos antes de calcular posiciones
+        if len(G.nodes) == 0:
+            return
+        
+        pos = self._calculate_layout(G)
         html = self._generate_pyvis_html(G, pos)
         self.web_view.setHtml(html)
     
+    def _calculate_layout(self, G):
+        """Calcula posiciones según el tipo de árbol"""
+        if self.tree_type == 'binary':
+            return self._binary_layout(G)
+        else:
+            return self._hierarchical_layout(G)
+    
     def _hierarchical_layout(self, G):
-        """Calcula posiciones jerárquicas (común para todos los árboles)"""
+        """Layout jerárquico genérico para B-trees"""
         levels = {}
         root = [n for n in G.nodes if G.in_degree(n) == 0][0]
         
@@ -66,8 +117,68 @@ class TreeVisualizerBase(ABC):
         
         return pos
     
-    def _generate_pyvis_html(self, G, pos, node_color='#FF2323', edge_color='#FF2D2D49', shape='circle'):
-        """Genera HTML con PyVis (configurable por subclases)"""
+    def _binary_layout(self, G):
+        """Layout especializado para árboles binarios"""
+        pos = {}
+        if not G.nodes:
+            return pos
+            
+        root = [n for n in G.nodes if G.in_degree(n) == 0][0]
+        self._calculate_binary_positions(G, root, pos, x=0, y=0, spacing=120, depth=1)
+        return pos
+    
+    def _calculate_binary_positions(self, G, node, pos, x, y, spacing, depth):
+        """Calcula posiciones recursivas con espaciado adaptativo mejorado"""
+        if node not in G.nodes:
+            return
+        
+        # Asignar posición actual
+        pos[node] = (x, y * 100)
+        
+        # Obtener sucesores (hijos)
+        successors = list(G.successors(node))
+        
+        # Detectar si el árbol es degenerado (todos los nodos a un lado)
+        is_right_heavy = len(successors) > 0 and all(
+            G.nodes[succ]['label'] > G.nodes[node]['label'] for succ in successors
+        )
+        is_left_heavy = len(successors) > 0 and all(
+            G.nodes[succ]['label'] < G.nodes[node]['label'] for succ in successors
+        )
+        
+        # Ajustar espaciado para árboles degenerados
+        if is_right_heavy or is_left_heavy:
+            spacing = max(spacing * 0.8, 60)  # Reducir menos el espaciado para degenerados
+        else:
+            spacing = max(spacing * 0.6, 40)  # Espaciado normal para árboles balanceados
+        
+        # Calcular posiciones de hijos
+        if len(successors) >= 1:  # Hijo izquierdo
+            child_x = x - spacing if not is_right_heavy else x + spacing * 0.3
+            self._calculate_binary_positions(
+                G, successors[0], pos, 
+                child_x, y + 1, 
+                spacing, depth + 1
+            )
+        
+        if len(successors) >= 2:  # Hijo derecho
+            child_x = x + spacing if not is_left_heavy else x - spacing * 0.3
+            self._calculate_binary_positions(
+                G, successors[1], pos, 
+                child_x, y + 1, 
+                spacing, depth + 1
+            )            
+    def _generate_pyvis_html(self, G, pos):
+        """Genera HTML con PyVis según el tipo de árbol"""
+        if self.tree_type == 'binary':
+            node_color = '#F32121'
+            edge_color = '#FF1D043E'
+            shape = 'circle'
+        else:  # b-tree
+            node_color = '#F32121'
+            edge_color = '#FF1D043E'
+            shape = 'box'
+        
         nt = Network("100vh", "100vw-40px", bgcolor='#161616', notebook=False, cdn_resources='remote')
         
         # Añadir nodos
@@ -110,99 +221,3 @@ class TreeVisualizerBase(ABC):
     def update(self):
         if self.tree:
             self.draw_tree(self.tree)
-            
-class BinaryTreeVisualizer(TreeVisualizerBase):
-    def _build_networkx_graph(self, G, node, parent_id=None):
-        """Construye el grafo para un árbol binario"""
-        if node is None:
-            return
-            
-        node_id = id(node)
-        label = str(node.value)
-        G.add_node(node_id, label=label)
-        
-        if parent_id is not None:
-            G.add_edge(parent_id, node_id)
-        
-        # Recursivamente agregar hijos izquierdo y derecho
-        self._build_networkx_graph(G, node.left, node_id)
-        self._build_networkx_graph(G, node.right, node_id)
-    
-    def _hierarchical_layout(self, G):
-        """Layout especializado para árboles binarios con espaciado adecuado"""
-        pos = {}
-        if not G.nodes:
-            return pos
-            
-        root = [n for n in G.nodes if G.in_degree(n) == 0][0]
-        self._calculate_binary_positions(G, root, pos, x=0, y=0, spacing=120, depth=1)
-        return pos
-    
-    def _calculate_binary_positions(self, G, node, pos, x, y, spacing, depth):
-        """Calcula posiciones recursivas con espaciado adaptativo"""
-        if node not in G.nodes:
-            return
-            
-        pos[node] = (x*2, y * 100)  # Multiplicamos y por 100 para mejor espaciado vertical
-        
-        # Reducir el espaciado con la profundidad pero mantener mínimo
-        new_spacing = max(spacing * 0.6, 0.8)  # No permitir que sea menor a 0.8
-        new_depth = depth + 1
-        
-        # Calcular posiciones de hijos
-        successors = list(G.successors(node))
-        if len(successors) >= 1:  # Hijo izquierdo
-            self._calculate_binary_positions(
-                G, successors[0], pos, 
-                x - spacing, y + 1, 
-                new_spacing, new_depth
-            )
-        if len(successors) >= 2:  # Hijo derecho
-            self._calculate_binary_positions(
-                G, successors[1], pos, 
-                x + spacing, y + 1, 
-                new_spacing, new_depth
-            )
-    
-    def _generate_pyvis_html(self, G, pos):
-        """Personalización para árboles binarios"""
-        return super()._generate_pyvis_html(
-            G, pos, 
-            node_color="#F32121",  # Azul para nodos
-            edge_color="#FF1D043E"   # Azul claro para aristas
-        )
-
-class BTreeVisualizer(TreeVisualizerBase):
-    def _build_networkx_graph(self, G, node, parent_id=None):
-        """Construye el grafo para un B-tree"""
-        node_id = id(node)
-        label = " | ".join(map(str, node.keys))
-        G.add_node(node_id, label=label)
-        
-        if parent_id is not None:
-            G.add_edge(parent_id, node_id)
-        
-        if not node.is_leaf:
-            for child in node.children:
-                self._build_networkx_graph(G, child, node_id)
-    
-    def _generate_pyvis_html(self, G, pos):
-        """Personalización para B-trees"""
-        return super()._generate_pyvis_html(
-            G, pos,
-            node_color="#F32121",  # Azul para nodos
-            edge_color="#FF1D043E",   # Azul claro para aristas
-            shape='box'
-        )
-
-def tree_visualizer_factory(parent_widget, tree):
-    """Factory polimórfico para visualizadores de árboles"""
-    # Detección de tipo para B-tree
-    if hasattr(tree, 'root') and hasattr(tree.root, 'is_leaf'):
-        return BTreeVisualizer(parent_widget)
-    # Detección de tipo para árbol binario
-    elif tree.root is None:
-        return BinaryTreeVisualizer(parent_widget)
-
-    else:
-        raise ValueError(f"Tipo de árbol no soportado: {type(tree)}")

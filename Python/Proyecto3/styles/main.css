@@ -1,0 +1,68 @@
+/* Main window styling with gradient background */
+@font-face {
+    font-family: 'Red Hat Display';
+    src: url(":/fonts/redhat.ttf");
+}
+
+QWidget#Main {
+    background-color: #161616;
+    font-family: 'Red Hat Display Light';
+    font-size: 15px;
+    color: #ffffff; 
+}
+/*popup*/
+#popup {
+    background-color: #242424;
+    border-radius: 12px;
+    padding: 10px;
+}
+
+#label {
+    color: #ffffff;
+    font-family: 'Red Hat Display Light';
+    font-size: 15px;
+}
+
+#closeButton {
+    background-color: #ff5353;
+    color: #ffffff;
+    font-family: 'Red Hat Display Light';
+    font-size: 15px;
+    padding: 6px;
+    border: none;
+    border-radius: 6px;
+}
+#closeButton:hover {
+    background-color: #b22;
+}
+
+/* PushButton styling */
+QPushButton[class~="appBtn"] {
+    background-color: #161616;  
+    border: 1px solid #ff5353;                  
+    border-radius: 10px;           
+    padding: 8px 16px;
+    color: #ffffff;     
+    font-family: 'Red Hat Display Light';
+    font-size: 15px;
+    min-width: 100px;
+    margin-top: 20px;
+}
+
+/* PushButton hover effect */
+QPushButton[class~="appBtn"]:hover {
+    border: 1px solid #ff2222;
+}
+
+/* PushButton pressed effect */
+QPushButton[class~="appBtn"]:pressed {
+    background-color: #ff2222;
+}
+
+QWebEngineView {
+    background-color: #161616;  /* Color oscuro para el marco */
+    border: 1px solid #ff5353;  /* Borde con tu color primario */
+    border-radius: 5px;
+    margin: 0px;
+    padding: 0px;
+}

@@ -103,5 +103,3 @@ class BinarySearchTree:
             return self.search(node.left, value)
         else:
             return self.search(node.right, value)
-
-
