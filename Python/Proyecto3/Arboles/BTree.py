@@ -280,27 +280,42 @@ class BTree:
                 self.root = self.root.children[0]
 
     def traverse_in_order(self, node):
-        """Recorrido in-order del árbol."""
+        """Recorrido in-order para árbol B: hijos[i] -> clave[i] -> hijos[i+1]"""
+        result = []
         if node:
-            self.mraverse_in_order(node.left)
-            print(node.keys)
-            self.mraverse_in_order(node.right)
+            for i in range(len(node.keys)):
+                if i < len(node.children):
+                    result.append(self.traverse_in_order(node.children[i]))
+                result.append(str(node.keys[i]))
+            # último hijo
+            if len(node.children) > len(node.keys):
+                result.append(self.traverse_in_order(node.children[-1]))
+        return ' '.join(filter(None, result))
 
+    
     def traverse_pre_order(self, node):
-        """Recorrido pre-order del árbol."""
+        """Recorrido pre-order para árbol B: claves primero, luego todos los hijos"""
+        result = []
         if node:
-            print(node.keys)
-            self.mraverse_pre_order(node.left)
-            self.mraverse_pre_order(node.right)
+            result.append(' '.join(str(k) for k in node.keys))
+            for child in node.children:
+                result.append(self.traverse_pre_order(child))
+        return ' '.join(filter(None, result))
 
     def traverse_post_order(self, node):
-        """Recorrido post-order del árbol."""
+        """Recorrido post-order para árbol B: primero los hijos, luego las claves"""
+        result = []
         if node:
-            self.mraverse_post_order(node.left)
-            self.mraverse_post_order(node.right)
-            print(node.keys)
+            for child in node.children:
+                result.append(self.traverse_post_order(child))
+            result.append(' '.join(str(k) for k in node.keys))
+        return ' '.join(filter(None, result))
 
-    def search(self, node, value):
+
+    def search(self,value):
+        return self.searchrec(self.root, value)
+        
+    def searchrec(self, node, value):
         """Busca un valor en el árbol."""
         if node is None: # si esta vacio
             return None
@@ -312,9 +327,9 @@ class BTree:
                 if value == key: # verifica existencia
                     return node
                 if value < key: # se encuentra en un hijo
-                    return self.search(node.children[i], value) if not node.is_leaf else None # si el hijo no es hoja
+                    return self.searchrec(node.children[i], value) if not node.is_leaf else None # si el hijo no es hoja
             # Si value > todas las claves
-            return self.search(node.children[-1], value) if not node.is_leaf else None
+            return self.searchrec(node.children[-1], value) if not node.is_leaf else None
         else:  # Búsqueda binaria para nodos grandes
             left, right = 0, len(keys) - 1
             while left <= right:
@@ -326,5 +341,5 @@ class BTree:
                 else:
                     right = mid - 1
             # Decide el hijo a explorar
-            return self.search(node.children[left], value) if not node.is_leaf else None
+            return self.searchrec(node.children[left], value) if not node.is_leaf else None
 

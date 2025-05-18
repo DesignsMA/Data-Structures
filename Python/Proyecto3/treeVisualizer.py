@@ -117,57 +117,112 @@ class TreeVisualizer:
         
         return pos
     
-    def _binary_layout(self, G):
-        """Layout especializado para árboles binarios"""
+    def _binary_layout(self, G, min_spacing=80, baseline_x=200, baseline_y=100):
+        """Layout especializado para árboles binarios con separación mínima entre subárboles del nodo raíz"""
         pos = {}
         if not G.nodes:
             return pos
-            
+
         root = [n for n in G.nodes if G.in_degree(n) == 0][0]
-        self._calculate_binary_positions(G, root, pos, x=0, y=0, spacing=120, depth=1)
+        successors = list(G.successors(root))
+
+        left_pos = {}
+        right_pos = {}
+
+        # Layout para subárbol izquierdo
+        if len(successors) >= 1:
+            self._calculate_binary_positions(
+                G, successors[0], left_pos,
+                x=0, y=1,
+                spacing=240,
+                min_spacing=min_spacing,
+                baseline_y=baseline_y
+            )
+
+        # Layout para subárbol derecho
+        if len(successors) == 2:
+            self._calculate_binary_positions(
+                G, successors[1], right_pos,
+                x=0, y=1,
+                spacing=240,
+                min_spacing=min_spacing,
+                baseline_y=baseline_y
+            )
+
+        # Calcular ancho del subárbol izquierdo y derecho
+        min_left_x = min((x for x, _ in left_pos.values()), default=0)
+        max_left_x = max((x for x, _ in left_pos.values()), default=0)
+        min_right_x = min((x for x, _ in right_pos.values()), default=0)
+        max_right_x = max((x for x, _ in right_pos.values()), default=0)
+
+        # Ajustar para evitar colisiones entre subárboles
+        left_shift = - (max_left_x + baseline_x / 2)
+        right_shift = -min_right_x + (max_left_x + baseline_x / 2)
+
+        for n in left_pos:
+            x, y = left_pos[n]
+            pos[n] = (x + left_shift, y)
+
+        for n in right_pos:
+            x, y = right_pos[n]
+            pos[n] = (x + right_shift, y)
+
+        # Asignar posición del nodo raíz en el centro
+        pos[root] = (0, 0)
+
         return pos
-    
-    def _calculate_binary_positions(self, G, node, pos, x, y, spacing, depth):
-        """Calcula posiciones recursivas con espaciado adaptativo mejorado"""
+
+    def _calculate_binary_positions(self, G, node, pos, x, y, spacing, min_spacing, baseline_y):
+        """Calcula posiciones recursivas con espaciado adaptativo"""
         if node not in G.nodes:
             return
-        
-        # Asignar posición actual
-        pos[node] = (x, y * 100)
-        
-        # Obtener sucesores (hijos)
+
+        # Obtener hijos
         successors = list(G.successors(node))
-        
-        # Detectar si el árbol es degenerado (todos los nodos a un lado)
+
+        # Detectar degeneración
         is_right_heavy = len(successors) > 0 and all(
             G.nodes[succ]['label'] > G.nodes[node]['label'] for succ in successors
         )
         is_left_heavy = len(successors) > 0 and all(
             G.nodes[succ]['label'] < G.nodes[node]['label'] for succ in successors
         )
-        
-        # Ajustar espaciado para árboles degenerados
-        if is_right_heavy or is_left_heavy:
-            spacing = max(spacing * 0.8, 60)  # Reducir menos el espaciado para degenerados
-        else:
-            spacing = max(spacing * 0.6, 40)  # Espaciado normal para árboles balanceados
-        
-        # Calcular posiciones de hijos
-        if len(successors) >= 1:  # Hijo izquierdo
-            child_x = x - spacing if not is_right_heavy else x + spacing * 0.3
+
+        # Ajustar espaciado
+        spacing = max(spacing * 0.7, min_spacing)
+
+        # Posiciones de hijos
+        child_positions = {}
+        if len(successors) >= 1:
             self._calculate_binary_positions(
-                G, successors[0], pos, 
-                child_x, y + 1, 
-                spacing, depth + 1
+                G, successors[0], child_positions,
+                x - spacing if not is_right_heavy else x + spacing * 0.5,
+                y + 1,
+                spacing,
+                min_spacing,
+                baseline_y
             )
-        
-        if len(successors) >= 2:  # Hijo derecho
-            child_x = x + spacing if not is_left_heavy else x - spacing * 0.3
+
+        if len(successors) >= 2:
             self._calculate_binary_positions(
-                G, successors[1], pos, 
-                child_x, y + 1, 
-                spacing, depth + 1
-            )            
+                G, successors[1], child_positions,
+                x + spacing if not is_left_heavy else x - spacing * 0.5,
+                y + 1,
+                spacing,
+                min_spacing,
+                baseline_y
+            )
+
+        # Si hay dos hijos, centrar el padre
+        if len(successors) == 2:
+            x1 = child_positions[successors[0]][0]
+            x2 = child_positions[successors[1]][0]
+            x = (x1 + x2) / 2
+
+        # Guardar posición actual
+        pos[node] = (x, y * baseline_y)
+        pos.update(child_positions)
+
     def _generate_pyvis_html(self, G, pos):
         """Genera HTML con PyVis según el tipo de árbol"""
         if self.tree_type == 'binary':
@@ -207,7 +262,7 @@ class TreeVisualizer:
                 "enabled": false,
                 "hierarchicalRepulsion": {
                     "centralGravity": 0,
-                    "nodeDistance": 120
+                    "nodeDistance": 200
                 }
             }
         }

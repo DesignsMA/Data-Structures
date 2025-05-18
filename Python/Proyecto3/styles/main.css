@@ -23,6 +23,13 @@ QWidget#Main {
     font-size: 15px;
 }
 
+QLabel {
+    color: #ffffff;
+    margin-top: 20px;
+    font-family: 'Red Hat Display Light';
+    font-size: 15px;
+}
+
 #closeButton {
     background-color: #ff5353;
     color: #ffffff;
@@ -65,4 +72,22 @@ QWebEngineView {
     border-radius: 5px;
     margin: 0px;
     padding: 0px;
+}
+
+QMenu {
+        background-color: #212121;
+        border: none;
+        padding: 10px;
+        color: #ffffff;
+        font-family: 'Red Hat Display Light';
+        font-size: 15px;
+}
+
+QMenu::item {
+    padding: 6px 20px;
+    border-radius: 4px;
+}
+
+QMenu::item:selected {
+    background-color: #ff5353;
 }

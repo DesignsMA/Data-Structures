@@ -291,36 +291,53 @@ class AVLTree:
         return current
     
     def traverse_in_order(self, node):
-        """Recorrido in-order del árbol."""
+        """Recorrido in-order que retorna una cadena."""
+        result = []
+        self._traverse_in_order_helper(node, result)
+        return " ".join(result)
+    
+    def _traverse_in_order_helper(self, node, result):
         if node:
-            self.traverse_in_order(node.left)
-            print(node.value)
-            self.traverse_in_order(node.right)
-
+            self._traverse_in_order_helper(node.left, result)
+            result.append(str(node.value))
+            self._traverse_in_order_helper(node.right, result)
+    
     def traverse_pre_order(self, node):
-        """Recorrido pre-order del árbol."""
+        """Recorrido pre-order que retorna una cadena."""
+        result = []
+        self._traverse_pre_order_helper(node, result)
+        return " ".join(result)
+    
+    def _traverse_pre_order_helper(self, node, result):
         if node:
-            print(node.value)
-            self.traverse_pre_order(node.left)
-            self.traverse_pre_order(node.right)
-
+            result.append(str(node.value))
+            self._traverse_pre_order_helper(node.left, result)
+            self._traverse_pre_order_helper(node.right, result)
+    
     def traverse_post_order(self, node):
-        """Recorrido post-order del árbol."""
+        """Recorrido post-order que retorna una cadena."""
+        result = []
+        self._traverse_post_order_helper(node, result)
+        return " ".join(result)
+    
+    def _traverse_post_order_helper(self, node, result):
         if node:
-            self.traverse_post_order(node.left)
-            self.traverse_post_order(node.right)
-            print(node.value)
-
-    def search(self, node, value):
+            self._traverse_post_order_helper(node.left, result)
+            self._traverse_post_order_helper(node.right, result)
+            result.append(str(node.value))
+    def search(self,value):
+        return self.searchrec(self.root, value)
+        
+    def searchrec(self, node, value):
         """Busca un valor en el árbol."""
         if node is None:
             return None
         elif node.value == value:
             return node
         elif value <= node.value:
-            return self.search(node.left, value)
+            return self.searchrec(node.left, value)
         else:
-            return self.search(node.right, value)
+            return self.searchrec(node.right, value)
 
 def edit_menu(tree):
     """Menú para editar el árbol."""

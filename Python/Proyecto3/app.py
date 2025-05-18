@@ -5,7 +5,7 @@ import tempfile
 from PySide6.QtWidgets import (QWidget, QPushButton, QApplication,
 QVBoxLayout, QHBoxLayout, QLabel, QMainWindow, QInputDialog, QMenu,
 QSplashScreen, QFileDialog, QMessageBox)
-from PySide6.QtCore import Slot, Qt, QUrl, QFile, QIODevice, QIODevice, QTextStream
+from PySide6.QtCore import Slot, Qt, QUrl, QFile, QIODevice, QIODevice, QTextStream, QTimer
 from PySide6.QtGui import QFontDatabase, QPixmap, QAction
 import numpy as np
 import res_rc
@@ -65,12 +65,10 @@ class MainWindow(QMainWindow):
     
     def init_menu(self):
         buttons = [
-            ("Añadir elemento", "edit", None),
-            ("Cargar el árbol desde archivo", "load", self.load),
-            ("Buscar un elemento", "search", None),
-            ("Insertar un elemento", "insert", None),
-            ("Eliminar un elemento", "delete", None),
-            ("Intercambiar un elemento", "exchange", None)
+            ("Cargar valores desde archivo", "load", self.load),
+            ("Insertar un elemento", "insert", self.insert),
+            ("Eliminar un elemento", "delete", self.delete),
+            ("Buscar un elemento", "search", self.search),
         ]
         
         self.menu.layout().addStretch() # funciona como un resorte, empuja los botones hacia arriba
@@ -82,8 +80,13 @@ class MainWindow(QMainWindow):
             if slot:
                 button.clicked.connect(slot)
             self.menu.layout().addWidget(button)
+            
+        self.init_traverse()
         self.init_treeSelect()
+        self.label = QLabel("...", parent=self)
+        self.menu.layout().addWidget(self.label)
         self.menu.layout().addStretch() # funciona como un resorte, empuja los botones hacia arriba
+        
 
         # Inicializar grafo
         self.tree = BinarySearchTree()
@@ -119,7 +122,7 @@ class MainWindow(QMainWindow):
         self.menu.layout().addWidget(self.btnMenu)
     def init_tree(self, opt):
         if opt == 0:
-            self.tree = BinarySearchTree()
+            self.tree = BinaryTree()
         elif opt == 1:
             self.tree = BinarySearchTree()
         elif opt == 2:
@@ -165,17 +168,93 @@ class MainWindow(QMainWindow):
             except Exception as e:
                 errorDiag.show()
     
-    def add_node_dialog(self):
-        """Diálogo para añadir nuevo nodo"""
-        text, ok = QInputDialog.getText(self, 'Añadir nodo', 'Ingrese nombre del nodo:')
-        if ok and text:
-            # Añadir en posición aleatoria para demostración
-            x = np.random.randint(-100, 100)
-            y = np.random.randint(-100, 100)
-            self.add_node(text, x, y)
+    @Slot()
+    def insert(self, arg):
+        number, ok = QInputDialog.getInt(
+                self,                          # Ventana padre
+                "Ingrese el valor a insertar.",           # Título
+                "Número: ",             # Etiqueta
+                step=1                         # Incremento/decremento
+        )
         
+        if ok and self.tree is not None:
+            self.tree.insert(number)
+            self.keys.append(number)
+            self.tree_viz.update()
+        else:
+            BlurredOverlay(self, "Hubo un error al introducir el valor.").show()
+            
+    @Slot()
+    def delete(self, arg):
+        number, ok = QInputDialog.getInt(
+                self,                          # Ventana padre
+                "Ingrese el valor a eliminar.",           # Título
+                "Número: ",             # Etiqueta
+                step=1                         # Incremento/decremento
+        )
+        
+        if ok and self.tree is not None:
+            self.tree.delete(number)
+            if number in self.keys:
+                self.keys.remove(number)
+            self.tree_viz.update()
+        else:
+            BlurredOverlay(self, "Hubo un error al introducir el valor.").show()
+    
+    @Slot()
+    def search(self, arg):
+        number, ok = QInputDialog.getInt(
+                self,                          # Ventana padre
+                "Ingrese el valor a buscar.",           # Título
+                "Número: ",             # Etiqueta
+                step=1                         # Incremento/decremento
+        )
+        
+        if ok and self.tree is not None:
+            node = self.tree.search(number)
+            if node is not None:
+                 BlurredOverlay(self, f"El valor: {number} fue encontrado.").show()
+        else:
+            BlurredOverlay(self, "Hubo un error al introducir el valor.").show()
+            
+    def init_traverse(self):
+        self.btnTraverse = QPushButton("Ver Recorrido", self.menu)
+        self.btnTraverse.setObjectName('btnTraverse')
+        self.btnTraverse.setProperty("class", f"appBtn")
+        self.btnTraverseActions = QMenu(parent=self)
+        self.btnTraverseActions.setObjectName("btnTraverseActions")
+        
+        self.actions = [
+            ("In-Orden", lambda: self.traverse(0)),
+            ("Post-Orden", lambda: self.traverse(1)),
+            ("Pre-Orden", lambda: self.traverse(2)),
+        ]
+        
+        # Agregar acciones dinámicamente
+        for name, func in self.actions:
+            action = QAction(name, self)
+            action.triggered.connect(func)
+            self.btnTraverseActions.addAction(action)
 
+        # Conectar el botón al menú
+        self.btnTraverse.setMenu(self.btnTraverseActions)
+        
+        self.menu.layout().addWidget(self.btnTraverse)
 
+    
+    @Slot()
+    def traverse(self, opt):
+        if self.tree.root is not None:
+            txt = ""
+            if opt == 0:
+                txt = self.tree.traverse_in_order(self.tree.root)
+            elif opt == 1:
+                txt = self.tree.traverse_post_order(self.tree.root)
+            elif opt == 2:
+                txt = self.tree.traverse_pre_order(self.tree.root)
+            self.label.setText(txt)
+            QTimer().singleShot(6000, lambda: self.label.setText('...'))
+        
 if __name__ == '__main__':
     
     # Create the Qt Application
